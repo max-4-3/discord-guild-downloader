@@ -57,11 +57,12 @@ def cls():
         system("clear")
         print(art)
 
-
+# Forgive my stupid variable naming
 G_name = ""
 G_json = {}
 
 
+# Main Guild Class
 class Guild:
 
     @staticmethod
@@ -315,6 +316,7 @@ class Guild:
         return guild_json.get("name")
 
 
+# Just A Collection of Functions Stored in a Class
 class Utils:
 
     @staticmethod
@@ -329,6 +331,7 @@ class Utils:
             cls()
             main()
 
+    # i didn't used in this version
     @staticmethod
     def create_archive(name: str, mode: str, base_dir: str):
         try:
