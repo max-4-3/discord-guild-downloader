@@ -22,17 +22,7 @@ To run this script, the user needs to enter the Authorization token into the scr
 
 ## Example
 1. **Run the script:**
-   ```python
-   python guild_downloader.py
-   ```
-2. **Enter your token:**
-    ```python
-    [+] Account Token:
-    ```
-3. **Enter the server id:**
-     ```python
-     [+] Server id:
-     ```
+   just run the file!
 
 ---
 
