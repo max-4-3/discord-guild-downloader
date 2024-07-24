@@ -1,5 +1,5 @@
 # Standard Packages
-from os import system, path, makedirs, startfile, getcwd
+from os import system, path, makedirs, startfile, getcwd, walk
 from platform import system as psys
 from json import dump, load
 from typing import Optional, Tuple
@@ -66,6 +66,7 @@ class Utility:
         self.os = psys().lower()
         self.token_file_name = "token.json"
         self.guild_id = None
+        self.__token__ = None
         self.headers = {}
         self.user = {}
         self.guild = {}
@@ -124,24 +125,30 @@ class Utility:
         if self.os in ["windows", "nt"]:
             system("cls")
             print(f"{Fore.LIGHTCYAN_EX}{self.downloading_art}")
-            print(f"Download path: \"{Fore.LIGHTMAGENTA_EX}{download_path}{Fore.LIGHTMAGENTA_EX}\"")
+            print(f"Download path: \"{Fore.LIGHTMAGENTA_EX}{download_path}{Fore.RESET}\"")
         else:
             system("clear")
             print(f"{Fore.LIGHTCYAN_EX}{self.downloading_art}")
-            print(f"Download path: \"{Fore.LIGHTMAGENTA_EX}{download_path}{Fore.LIGHTMAGENTA_EX}\"")
+            print(f"Download path: \"{Fore.LIGHTMAGENTA_EX}{download_path}{Fore.RESET}\"")
 
     def get_guild_id(self) -> int:
-        prompt = f"{Fore.LIGHTBLUE_EX}[+] Enter The Guild ID: \n"
+        prompt = f"{Fore.LIGHTBLUE_EX}[+] Enter The Guild ID (ls to list all server): {Fore.RESET}\n"
         while True:
             guild_id = input(prompt)
             if not guild_id:
+                self.main_cls()
                 error("Please enter a Guild ID!")
             elif guild_id == "exit":
                 success("Okay!")
                 exit(0)
+            elif guild_id == "ls":
+                self.guild_id = int(self.list_guilds()[0])
+                return self.guild_id
             elif not guild_id.isdigit():
+                self.main_cls()
                 error("entered id is not digit!")
             elif not len(guild_id) > 5:
+                self.main_cls()
                 error("guild id can't be so small!")
             else:
                 self.guild_id = int(guild_id)
@@ -149,31 +156,41 @@ class Utility:
 
     def get_user_token(self) -> str:
         token = self.validate()
-        prompt = f"{Fore.LIGHTBLUE_EX}[+] Enter Your Account Token: \n"
+        prompt = f"{Fore.LIGHTBLUE_EX}[+] Enter Your Account Token (h for help): \n"
 
         if token:
             choice = input(f"{Fore.LIGHTYELLOW_EX}[?] Load token from file? (yes/no): {Fore.RESET}\n").lower()
             while choice not in ["yes", "no", "y", "n"]:
+                self.main_cls()
                 choice = input(f"{Fore.LIGHTYELLOW_EX}[?] Load token from file? (yes/no): {Fore.RESET}\n").lower()
             if choice in ["yes", "y"]:
-                return token
+                self.__token__ = token
+                return self.__token__
 
         while True:
             token = input(prompt)
             if not token:
+                self.main_cls()
                 error("please enter a token")
+                continue
+            if token in ["h", "help"]:
+                self.main_cls()
+                system("start https://github.com/max-4-3/discord-guild-downloader/blob/main/how%20to%20get%20token.md")
                 continue
             try:
                 split_text = len(token.split("."))
                 if split_text != 3:
+                    self.main_cls()
                     error("The account token is not valid!")
                     continue
             except IndexError:
+                self.main_cls()
                 error("The account token is not valid!")
                 continue
             with open(f'{self.token_file_name}', 'w') as file:
                 dump({"token": token}, file)
-            return token
+            self.__token__ = token
+            return self.__token__
 
     def validate(self) -> Optional[str]:
         try:
@@ -197,7 +214,9 @@ class Utility:
 
     async def get_user_and_guild(self):
         async with ClientSession() as session:
+            info("getting user info...")
             self.user = await self.get_user(session)
+            info("getting server info...")
             self.guild = await self.get_guild(session)
             return self.user, self.guild
 
@@ -211,11 +230,46 @@ class Utility:
 
     async def get_guild(self, session: ClientSession):
         url = BASE + f"/guilds/{self.guild_id}"
-        async with session.get(url, headers=self.headers) as response:
+        async with session.get(url, headers=self.headers, params={"with_counts": "true"}) as response:
             if response.status != 200:
                 error(f"Error getting guild : {response.status}")
                 return None
             return await response.json()
+
+    async def get_guilds(self):
+        async with ClientSession() as session:
+            url = f"{BASE}/users/@me/guilds"
+            self.headers = self.generate_headers(self.__token__)
+            async with session.get(url, headers=self.headers) as response:
+                guilds_json = await response.json()
+                return {idx: (g.get("id"), g.get("name")) for idx, g in enumerate(guilds_json, start=1)}
+
+    def list_guilds(self):
+        guild_list = run(self.get_guilds())
+
+        def print_guilds():
+            for idx, guild_info in guild_list.items():
+                print(f"{idx}. {guild_info[1]}")
+
+        print_guilds()
+        while True:
+            choice = input(f"{Fore.LIGHTMAGENTA_EX}Choose The Guild: {Fore.RESET}\n")
+            if not choice:
+                error("choose a guild!")
+                self.main_cls()
+                print_guilds()
+            elif not choice.isdigit():
+                error("enter only number!")
+                self.main_cls()
+                print_guilds()
+            elif int(choice) > len(guild_list):
+                error("not in guild list")
+                self.main_cls()
+                print_guilds()
+            else:
+                for key, value in guild_list.items():
+                    if key == int(choice):
+                        return value
 
     def confirmation(self):
         user, guild = self.user, self.guild
@@ -293,7 +347,9 @@ class Utility:
 
         # Get Basic Info
         token = self.get_user_token()
+        self.main_cls()
         self.get_guild_id()
+        self.main_cls()
 
         # Generate headers
         self.generate_headers(token)
@@ -312,6 +368,8 @@ class Utility:
 
         if not user or not guild:
             self.main_entrypoint(with_error=True, errors=errors_)
+
+        self.main_cls()
 
         # Confirmation
         confirm = self.confirmation()
@@ -598,7 +656,7 @@ class Download(Guild):
         :param sub_folder_name: The Folder Where They Will Be saved!
         :return: Nothing
         """
-        every_file_size = []
+        file_size = 0
 
         if len(files) == 0:
             error(f"no {download_type} to download")
@@ -615,7 +673,9 @@ class Download(Guild):
 
                     if path.exists(full_path):
                         if prev_id == id_:
-                            success(f"{file_name} already exists!")
+                            exist_size_kb = path.getsize(full_path) / 1024
+                            file_size += exist_size_kb
+                            success(f"{file_name} already exists ({exist_size_kb:.2f}kb)!")
                             bar()
                             continue
                         else:
@@ -628,9 +688,9 @@ class Download(Guild):
                             with open(full_path, 'wb') as file:
                                 byte = await response.read()
                                 file.write(byte)
-                                size_in_mb = len(byte) / 1024 * 2
-                                success(f"\"{file_name}\" downloaded ({size_in_mb:.2f}mb)!")
-                                every_file_size.append(round(size_in_mb, 2))
+                                size_in_kb = len(byte) / 1024
+                                success(f"\"{file_name}\" downloaded ({size_in_kb:.2f}kb)!")
+                                file_size += size_in_kb
                     except Exception as download_exception:
                         error(f"Can't Download {file_name} because of {download_exception}")
                     finally:
@@ -638,7 +698,9 @@ class Download(Guild):
                     prev_id = id_
                     sleep(0.1)
         abs_path = path.join(path.join(getcwd(), self.directory_name), sub_folder_name)
-        success(f"All {len(files)} files downloaded in \"{abs_path}\", size: {sum(every_file_size)}mb")
+        success(
+            f"All {len(files)} files downloaded in \"{abs_path}\", size: {file_size / 1024:.2f}MB ({file_size:.2f}KB)"
+        )
 
     def choice_1(self):
         emoji_list = self.emojis
@@ -729,7 +791,7 @@ banner: {self.banner}
 {self.name} has {len(self.roles)} roles.
 {self.name} has {len(self.channels)} channels.
 {self.name} has following features:
-{"\t".join(self.__raw__.get("features", []))}
+    {"\n    ".join(self.__raw__.get("features", []))}
 
 - Presence Info:
 {self.name} has {self.__raw__.get("approximate_member_count", "\"not able to get\"")} members (approx).
@@ -743,7 +805,7 @@ banner: {self.banner}
                     errors="ignore"
             ) as file:
                 file.flush()
-                file.write(inf)
+                file.write(inf.lstrip())
             success(f"{self.name} info downloaded!")
         except Exception as choice_5_exception:
             error(f"can't open {self.directory_name}_info.json, because: {choice_5_exception}")
@@ -786,7 +848,25 @@ banner: {self.banner}
             error(f"Can't open \"{self.directory_name}\"!"
                   f"\nbecause of: {open_dir_exception}")
 
+        size_in_byte = 0
+        total_files = 0
+        total_gifs = 0
+        for root, dirs, files in walk(self.directory):
+            for file in files:
+                name, ext = path.splitext(file)
+                if ext == ".gif":
+                    total_gifs += 1
+                file_path = path.join(root, file)
+                if not path.isfile(file_path):
+                    continue
+                total_files += 1
+                file_size = path.getsize(file_path)
+                size_in_byte += file_size
+
+        system("title Downloaded!")
         success("everything downloaded!")
+        print(f"{Fore.LIGHTCYAN_EX}[+] Total Size: {size_in_byte / 1024:.2f}kb ({size_in_byte / (1024*1024):.2f}mb)"
+              f"\n[+] Total Files: {total_files} files ({total_files - total_gifs} images and {total_gifs} gifs)")
 
 
 if __name__ == '__main__':
