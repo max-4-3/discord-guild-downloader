@@ -2,6 +2,8 @@
 
 ## Browser (Any)
 
+First of all open discord.com and log into your account!
+
 1. **Open Developer Console**
     - Press `Ctrl + Shift + J` to open the console.
 		
