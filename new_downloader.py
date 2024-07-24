@@ -42,7 +42,7 @@ except ModuleNotFoundError:
 try:
     from fake_useragent import UserAgent
 except ModuleNotFoundError:
-    system("pip install colorama")
+    system("pip install fake-useragent")
     from fake_useragent import UserAgent
 
 
