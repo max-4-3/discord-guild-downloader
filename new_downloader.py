@@ -6,6 +6,7 @@ from typing import Optional, Tuple
 from asyncio import run
 from time import sleep
 from random import uniform
+from re import fullmatch
 
 # external packages
 try:
@@ -50,15 +51,15 @@ init(autoreset=True)
 
 
 def success(text: str):
-    print(f"{Fore.LIGHTGREEN_EX}[+] {text.title()}")
+    print(f"{Fore.LIGHTGREEN_EX}[+] {text.capitalize()}")
 
 
 def error(text: str):
-    print(f"{Fore.LIGHTRED_EX}[!] {text.title()}")
+    print(f"{Fore.LIGHTRED_EX}[!] {text.capitalize()}")
 
 
 def info(text: str):
-    print(f"{Fore.LIGHTMAGENTA_EX}[?] {text.title()}")
+    print(f"{Fore.LIGHTMAGENTA_EX}[?] {text.capitalize()}")
 
 
 class Utility:
@@ -125,16 +126,16 @@ class Utility:
         if self.os in ["windows", "nt"]:
             system("cls")
             print(f"{Fore.LIGHTCYAN_EX}{self.downloading_art}")
-            print(f"Download path: \"{Fore.LIGHTMAGENTA_EX}{download_path}{Fore.RESET}\"")
+            print(f"Download path: \"{Fore.LIGHTMAGENTA_EX}{path.relpath(download_path)}{Fore.RESET}\"")
         else:
             system("clear")
             print(f"{Fore.LIGHTCYAN_EX}{self.downloading_art}")
-            print(f"Download path: \"{Fore.LIGHTMAGENTA_EX}{download_path}{Fore.RESET}\"")
+            print(f"Download path: \"{Fore.LIGHTMAGENTA_EX}{path.relpath(download_path)}{Fore.RESET}\"")
 
     def get_guild_id(self) -> int:
         prompt = f"{Fore.LIGHTBLUE_EX}[+] Enter The Guild ID (ls to list all server): {Fore.RESET}\n"
         while True:
-            guild_id = input(prompt)
+            guild_id = input(prompt).lower()
             if not guild_id:
                 self.main_cls()
                 error("Please enter a Guild ID!")
@@ -153,40 +154,45 @@ class Utility:
             else:
                 self.guild_id = int(guild_id)
                 return self.guild_id
+    
+    @staticmethod
+    def is_valid_string(string):
+        pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z0-9]+\.(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z0-9]+\.(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z0-9]+$'
+        return fullmatch(pattern, string) is not None
 
     def get_user_token(self) -> str:
+        
         token = self.validate()
-        prompt = f"{Fore.LIGHTBLUE_EX}[+] Enter Your Account Token (h for help): \n"
-
         if token:
-            choice = input(f"{Fore.LIGHTYELLOW_EX}[?] Load token from file? (yes/no): {Fore.RESET}\n").lower()
-            while choice not in ["yes", "no", "y", "n"]:
-                self.main_cls()
+            while True:
                 choice = input(f"{Fore.LIGHTYELLOW_EX}[?] Load token from file? (yes/no): {Fore.RESET}\n").lower()
-            if choice in ["yes", "y"]:
-                self.__token__ = token
-                return self.__token__
+                if choice not in ["yes", "no", "y", "n"]:
+                    self.main_cls()
+                    continue
+                elif choice in ["yes", "y"]:
+                    self.__token__ = token
+                    return self.__token__
+                elif choice in ["no", "n"]:
+                    break
 
+        prompt = f"{Fore.LIGHTBLUE_EX}[+] Enter Your Account Token (h for help): \n"
         while True:
             token = input(prompt)
             if not token:
                 self.main_cls()
                 error("please enter a token")
                 continue
-            if token in ["h", "help"]:
+            
+            elif token in ["h", "help"]:
                 self.main_cls()
-                system("start https://github.com/max-4-3/discord-guild-downloader/blob/main/how%20to%20get%20token.md")
+                system("start \"https://github.com/max-4-3/discord-guild-downloader/blob/main/how%20to%20get%20token.md\"")
                 continue
-            try:
-                split_text = len(token.split("."))
-                if split_text != 3:
-                    self.main_cls()
-                    error("The account token is not valid!")
-                    continue
-            except IndexError:
+            
+            elif not self.is_valid_string(token):
                 self.main_cls()
-                error("The account token is not valid!")
+                error("invalid token given!")
                 continue
+
             with open(f'{self.token_file_name}', 'w') as file:
                 dump({"token": token}, file)
             self.__token__ = token
@@ -198,11 +204,11 @@ class Utility:
                 return
             with open(self.token_file_name, 'r') as file:
                 token = load(file).get("token")
-            if not token or len(token.split(".")) != 3:
+            if (not token) or (not self.is_valid_string(token)):
                 return
             return token
         except Exception as token_exception:
-            error(f"Got An Exception While Opening \"{self.token_file_name}\" File, {token_exception}")
+            error(f"Got An Exception While Opening \"{self.token_file_name}\" File :{token_exception}")
             return
 
     def generate_headers(self, auth: str) -> dict[str, str]:
@@ -220,7 +226,7 @@ class Utility:
             self.guild = await self.get_guild(session)
             return self.user, self.guild
 
-    async def get_user(self, session: ClientSession):
+    async def get_user(self, session):
         url = BASE + f"/users/@me"
         async with session.get(url, headers=self.headers) as response:
             if response.status != 200:
@@ -228,7 +234,7 @@ class Utility:
                 return None
             return await response.json()
 
-    async def get_guild(self, session: ClientSession):
+    async def get_guild(self, session):
         url = BASE + f"/guilds/{self.guild_id}"
         async with session.get(url, headers=self.headers, params={"with_counts": "true"}) as response:
             if response.status != 200:
@@ -411,6 +417,11 @@ class Guild(Utility):
         self.splash = self.get_splash()
         self.banner = self.get_banner()
         self.discovery_splash = self.get_discovery_splash()
+        self.mfa = self.get_mfa_level()
+        self.boost_perks = self.get_premium_level()
+        self.nsfw = self.get_nsfw_level()
+        self.verification_level = self.get_verification_level()
+
 
         # external
         self.emojis = self.get_emoji()
@@ -595,6 +606,41 @@ class Guild(Utility):
             return
         fmt = ".gif" if discovery_splash_hash.startswith("a_") else ".png"
         return f"{ASSET_BASE}/discovery-splashes/{self.guild_id}/{discovery_splash_hash}.{fmt}?size=4096"
+
+    def get_mfa_level(self) -> None | str:
+        reference_json = {
+        0: f"{self.name} does not require to have 2FA/MFA enabled for MODERATION ACTIONS!",
+        1: f"{self.name} requires to have 2FA/MFA enabled for MODERATION ACTIONS"
+        }
+        return reference_json.get(self.__raw__.get("mfa_level", 0))
+
+    def get_verification_level(self) -> None | str:
+        refrence_json = {
+            0: f"{self.name} doesn't have any kind of verification!",
+            1: f"{self.name} requires user to have a verified email.",
+            2: f"{self.name} requires user to have a verified email + must be reegistered on discord for more than 5 min.",
+            3: f"{self.name} requires user to have a verified email + must be member of {self.name} for more than 10 min.",
+            4: f"{self.name} requires user to have a verified email + a verified phone number 💀."
+        }
+        return refrence_json.get(self.__raw__.get("verification_level", 0))
+    
+    def get_premium_level(self) -> None | str:
+        refrence_json = {
+            0: f"{self.name} doesn't have any server boost perks!",
+            1: f"{self.name} have level 1 server boost perks.",
+            2: f"{self.name} have level 2 server boost perks.",
+            3: f"{self.name} have level 1 server boost perks."
+        }
+        return refrence_json.get(self.__raw__.get("premium_tier", 0))
+    
+    def get_nsfw_level(self) -> None | str:
+        refrence_json = {
+            0: "Normal",
+            1: "Explicit",
+            2: "Safe",
+            3: "Age Restricted 💀"
+        }
+        return refrence_json.get(self.__raw__.get("nsfw_level", 0))
 
     def __repr__(self):
         r = f'''
@@ -787,16 +833,21 @@ banner: {self.banner}
 {self.name} has {len(self.emojis)} emojis.
 {self.name} has {len(self.stickers)} stickers.
 
+- Presence Info:
+{self.name} has {self.__raw__.get("approximate_member_count", "\"not able to get\"")} members (approx).
+{self.name} has {self.__raw__.get("approximate_presence_count", "\"not able to get\"")} members online (approx).
+
 - Advance Info:
 {self.name} has {len(self.roles)} roles.
 {self.name} has {len(self.channels)} channels.
 {self.name} has following features:
     {"\n    ".join(self.__raw__.get("features", []))}
+{self.name} has {self.nsfw} nsfw level.
+{self.boost_perks}
+{self.verification_level}
+{self.mfa}
 
-- Presence Info:
-{self.name} has {self.__raw__.get("approximate_member_count", "\"not able to get\"")} members (approx).
-{self.name} has {self.__raw__.get("approximate_presence_count", "\"not able to get\"")} members online (approx).
-        '''
+'''
         try:
             with open(
                     f'{self.directory}/{self.directory_name}_info.txt',
@@ -851,7 +902,7 @@ banner: {self.banner}
         size_in_byte = 0
         total_files = 0
         total_gifs = 0
-        for root, dirs, files in walk(self.directory):
+        for root, _, files in walk(self.directory):
             for file in files:
                 name, ext = path.splitext(file)
                 if ext == ".gif":
