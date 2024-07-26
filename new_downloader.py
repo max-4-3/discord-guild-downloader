@@ -213,9 +213,9 @@ class Utility:
         return
 
     def retry(self):
-        
+
         system("title Rerun?")
-        
+
         retry_prompt = input(f"{Fore.LIGHTYELLOW_EX}[?] Retry? (yes/no): {Fore.RESET}").lower()
         while retry_prompt not in ["yes", "no", "y", "n"]:
             retry_prompt = input(f"{Fore.LIGHTYELLOW_EX}[?] Retry? (yes/no): {Fore.RESET}").lower()
@@ -245,16 +245,16 @@ class Utility:
         if self.os in ["windows", "nt"]:
             system("cls")
             print(f"{Fore.LIGHTCYAN_EX}{self.downloading_art}")
-            print(f"Download path: \"{Fore.LIGHTMAGENTA_EX}{path.relpath(download_path)}{Fore.RESET}\"")
+            print(f"Download path: \"{Fore.LIGHTMAGENTA_EX}{path.abspath(download_path)}{Fore.RESET}\"")
         else:
             system("clear")
             print(f"{Fore.LIGHTCYAN_EX}{self.downloading_art}")
-            print(f"Download path: \"{Fore.LIGHTMAGENTA_EX}{path.relpath(download_path)}{Fore.RESET}\"")
+            print(f"Download path: \"{Fore.LIGHTMAGENTA_EX}{path.abspath(download_path)}{Fore.RESET}\"")
 
     def get_guild_id(self) -> int:
-        
+
         system("title Getting Server ID")
-        
+
         prompt = f"{Fore.LIGHTBLUE_EX}[+] Enter The Guild ID (ls to list all server): {Fore.RESET}\n"
         while True:
             guild_id = input(prompt).lower()
@@ -282,7 +282,7 @@ class Utility:
         return len(string.strip().split(".")) == 3
 
     def get_user_token(self) -> str:
-        
+
         system("title Getting Token...")
 
         token = self.validate()
@@ -357,9 +357,9 @@ class Utility:
         return self.headers
 
     async def get_user_and_guild(self):
-        
+
         system("title Getting info...")
-        
+
         async with ClientSession() as session:
             info("getting user info...")
             self.user = await self.get_user(session)
@@ -398,11 +398,17 @@ class Utility:
             url = f"{BASE}/users/@me/guilds"
             self.headers = self.generate_headers(self.__token__)
             async with session.get(url, headers=self.headers) as response:
+                if response.status != 200:
+                    error(f"error listing server: {response.status}")
+                    return
                 guilds_json = await response.json()
                 return {idx: (g.get("id"), g.get("name")) for idx, g in enumerate(guilds_json, start=1)}
 
     def list_guilds(self):
         guild_list = run(self.get_guilds())
+
+        if guild_list is None:
+            return
 
         def print_guilds():
             for idx, guild_info in guild_list.items():
@@ -425,9 +431,9 @@ class Utility:
                     return value
 
     def confirmation(self):
-        
+
         system("title Confirming...")
-        
+
         user, guild, owner = self.user, self.guild, self.guild_owner
         while True:
             self.main_cls()
@@ -440,10 +446,10 @@ class Utility:
 {Fore.LIGHTBLUE_EX}Server Information:{Fore.LIGHTWHITE_EX}
     Name: {guild.get("name", "no name")}
     ID: {guild.get("id")}
-    Owner's Name: {owner.get("user", {}).get("display_name", owner.get("user", {}).get("username"))}
+    Owner's Name: {owner.get("user", {}).get("global_name", owner.get("user", {}).get("username"))}
     Owner's ID: {owner.get("user", {}).get("id")}
     Owner's Bio: 
-    {owner.get("user", {}).get("bio", "no bio").strip()}
+    {owner.get("user", {}).get("bio", "no bio").strip().replace("\n", "    \n")}
             '''
             info("is this info correct?")
             print(i)
@@ -456,9 +462,9 @@ class Utility:
                 return confirm_choice in ["yes", "y"]
 
     def choose_what_to_download(self):
-        
+
         system("title Menu")
-        
+
         while True:
             if self.download_dir is None:
                 self.download_dir = "."
@@ -850,8 +856,8 @@ class Download(Guild):
         self.owner = owner
         self.dir = download_dir
         self.directory_name = self.sanitize_filename(self.name)
-        makedirs(name=rf"{self.directory_name}", exist_ok=True)
         self.directory = path.join(self.dir, self.directory_name)
+        makedirs(name=rf"{self.directory}", exist_ok=True)
         self.downloading_cls(self.directory)
         if download_choice == 1:
             self.choice_1()
@@ -1046,8 +1052,11 @@ mutual friends:
                     encoding="utf-8",
                     errors="ignore"
             ) as file:
-                file.flush()
-                file.write(inf.lstrip())
+                try:
+                    file.flush()
+                except Exception as e:
+                    error(f"unable to flush \"{info_file_name}\": {repr(e)}")
+                file.write(inf.strip())
             success(f"{self.name} info downloaded!")
         except Exception as choice_5_exception:
             error(f"can't open \"{info_file_name}\", because: {repr(choice_5_exception)}")
@@ -1120,5 +1129,5 @@ if __name__ == '__main__':
         exit(0)
     except Exception as e:
         info(f'got an exception in main:')
-        print(f"{type(e).__name__} at line <{e.__traceback__.tb_lineno}> of \"{__file__}\": {e.__doc__}")
+        print(f"{type(e).__name__} at line <{e.__traceback__.tb_lineno}> of \"{__file__}\": \n{repr(e)}")
         main.retry()
