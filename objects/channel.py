@@ -40,7 +40,7 @@ class Channel:
 
     def __iter__(self):
         for attr in self.__slots__:
-            if attr[0] == '-':
+            if attr[0] == '_':
                 continue
             value = getattr(self, attr, None)
             if value is None:
