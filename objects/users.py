@@ -3,7 +3,7 @@ from typing import Optional
 
 import aiohttp
 
-from objects import BASE, ASSET_BASE
+from objects.constants import BASE, ASSET_BASE
 
 
 class BaseUser:
@@ -24,26 +24,6 @@ class BaseUser:
 
     def __init__(self, data: dict, client: bool = False) -> None:
         self._update(data, client)
-
-    def __repr__(self) -> str:
-        return (
-            f"<BaseUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
-            f" bot={self.bot} system={self.system}>"
-        )
-
-    def __str__(self) -> str:
-        if self.discriminator == '0':
-            return self.name
-        return f'{self.name}#{self.discriminator}'
-
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, self.__class__) and other.id == self.id
-
-    def __ne__(self, other: object) -> bool:
-        return not self.__eq__(other)
-
-    def __hash__(self) -> int:
-        return self.id >> 22
 
     def _update(self, data: dict, client) -> None:
         if not client:
@@ -93,6 +73,26 @@ class BaseUser:
                 continue
             yield attr, value
 
+    def __repr__(self) -> str:
+        return (
+            f"<BaseUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
+            f" bot={self.bot} system={self.system}>"
+        )
+
+    def __str__(self) -> str:
+        if self.discriminator == '0':
+            return self.name
+        return f'{self.name}#{self.discriminator}'
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, self.__class__) and other.id == self.id
+
+    def __ne__(self, other: object) -> bool:
+        return not self.__eq__(other)
+
+    def __hash__(self) -> int:
+        return self.id >> 22
+    
 
 class Owner(BaseUser):
     __slots__ = (*BaseUser.__slots__, '__loop')

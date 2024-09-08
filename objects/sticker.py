@@ -1,4 +1,4 @@
-from objects import ASSET_BASE
+from objects.constants import ASSET_BASE
 
 
 class Sticker:

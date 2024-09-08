@@ -10,7 +10,6 @@ import aiohttp
 from alive_progress import alive_bar
 
 from objects.emoji import Emojis
-# Custom Classes for Guild, Emojis, Stickers
 from objects.guild import Guild
 from objects.sticker import Stickers
 
@@ -20,11 +19,11 @@ class DirectoryHelper:
     A class to handle the creation and sanitization of directory paths.
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, path: str):
         self.dir_name = name
         if platform_name().lower() in ['windows', 'nt']:
             self.sanitize_dir_name()
-        self.dir_name = os.path.join(os.getcwd(), self.dir_name)
+        self.dir_name = os.path.join(path if path else os.getcwd(), self.dir_name)
         self.name = os.path.basename(self.dir_name)
 
     def sanitize_dir_name(self):
@@ -52,11 +51,11 @@ class Downloader(DirectoryHelper):
     """
 
     def __init__(self, guild: Guild, download_path: str, choice: int):
-        super().__init__(guild.name)
+        super().__init__(guild.name, path=download_path)
         self.choice = choice
         self.guild = guild
         self.total_size = 0  # in KB
-        self.path = os.path.join(download_path, os.path.basename(self.dir_name))
+        self.path = self.dir_name
 
         self.choice_base_download()
 
@@ -99,11 +98,11 @@ class Downloader(DirectoryHelper):
                     if isinstance(file, dict):  # Handle case for dict file type
                         is_animated = file.get('animated', False)
                         file_name = file.get('name', 'No Name') + ('.gif' if is_animated else '.png')
-                        sub_dir = 'gifs' if is_animated else 'images'
+                        sub_dir = (file.__class__.__name__ if not isinstance(file, list) else 'Resources') + ('gifs' if is_animated else 'images')
                         download_path = self.create_directory(sub_dir)
                     else:  # Emojis or Stickers
                         file_name = file.name + ('.gif' if file.animated else '.png')
-                        sub_dir = 'gifs' if file.animated else 'images'
+                        sub_dir = (file.__class__.__name__ if not isinstance(file, list) else 'Resources') + ('gifs' if is_animated else 'images')
                         download_path = self.create_directory(sub_dir)
 
                     file_path = os.path.join(download_path, file_name)
@@ -189,7 +188,7 @@ class Downloader(DirectoryHelper):
                 task()
                 sleep(uniform(0.5, 1.2))  # Simulate processing time between tasks
             except Exception as e:
-                print(f"Task failed: {e}")
+                print(f"[{task.__name__.replace('_', " ").title()}] Task failed: {e}")
 
         # Final report of the total download
         print(f"Total size downloaded: {self.total_size / 1024:.2f} MB")

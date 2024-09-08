@@ -2,8 +2,8 @@ import asyncio
 
 import aiohttp
 
-from objects import BASE, ASSET_BASE
 from objects.channel import Channels
+from objects.constants import BASE, ASSET_BASE
 from objects.emoji import Emojis
 from objects.role import Roles
 from objects.sticker import Stickers
@@ -58,24 +58,23 @@ class Guild:
         return results
 
     def _init_(self, data: dict):
-        self.name = data.get("name")
-        self.description = data.get("description")
-        self.approximate_member_count = data.get('approximate_member_count')
-        self.approximate_presence_count = data.get('approximate_presence_count')
-        self._icon = data.get('icon')
-        self._banner = data.get('banner')
-        self._discovery_splash = data.get('discovery_splash')
-        self._splash = data.get('splash')
-        self._verification_level = data.get('verification_level', 0)
-        self._boost_perks = data.get('premium_tier', 0)
-        self._mfa = data.get('mfa_level', 0)
-        self._verification_level = data.get('verification_level', 0)
-        self._nsfw = data.get('nsfw_level', 0)
-        self._features = data.get('features', [])
-        self._stickers = data.get('stickers')
-        self._emojis = data.get('emojis')
-        self._roles = data.get('roles')
-        self._channels = self.__do_async_work(path="channels")
+        self.name: str = data.get("name", f"No Name [{self.id}]")
+        self.description: str = data.get("description", f"No description [{self.id}]")
+        self.approximate_member_count: int = data.get('approximate_member_count', 0)
+        self.approximate_presence_count: int = data.get('approximate_presence_count', 0)
+        self._icon: str | None = data.get('icon', None)
+        self._banner: str | None = data.get('banner', None)
+        self._discovery_splash: str | None = data.get('discovery_splash', None)
+        self._splash: str | None = data.get('splash', None)
+        self._verification_level: int = data.get('verification_level', 0)
+        self._boost_perks: int = data.get('premium_tier', 0)
+        self._mfa: int = data.get('mfa_level', 0)
+        self._nsfw: int = data.get('nsfw_level', 0)
+        self._features: list[str | None] = data.get('features', [])
+        self._stickers: list[dict | None] = data.get('stickers', [])
+        self._emojis: list[dict | None] = data.get('emojis', [])
+        self._roles: list[dict | None] = data.get('roles', [])
+        self._channels: list[dict | None] = self.__do_async_work(path="channels")
         self.owner = Owner(self.__loop__, data.get('owner_id'), self.__headers__)
 
     @property
@@ -154,25 +153,25 @@ class Guild:
     @property
     def channels(self) -> Channels | None:
         if not self._channels:
-            return None
+            self._channels = self.__do_async_work(path='channels')
         return Channels(self._channels)
 
     @property
     def emojis(self) -> Emojis | None:
         if not self._emojis:
-            return None
+            self._emojis = self.__do_async_work(path='emojis')
         return Emojis(self._emojis)
 
     @property
     def roles(self) -> Roles | None:
         if not self._roles:
-            return None
+            self.__do_async_work(path='roles')
         return Roles(self._roles)
 
     @property
     def stickers(self) -> Stickers | None:
         if not self._stickers:
-            return None
+            self.__do_async_work(path='stickers')
         return Stickers(self._stickers)
 
     @property
@@ -229,7 +228,7 @@ Advance Info:
 \t{self.premium_level}
 \t{self.verification_level}
 \t{self.name} has following features:
-\t{'\t\n'.expandtabs(2).join([feature.strip().replace('_', ' ').title() for feature in self._features if feature])}
+{'\t\n'.expandtabs(4).join([feature.strip().replace('_', ' ').title() for feature in self._features if feature])}
 
 *This info is gathered at:
 {datetime.now().strftime('%Y-%m-%d %H:%M:%S%p')}
@@ -313,14 +312,14 @@ class PartialGuilds:
     def __init__(self, loop: asyncio.AbstractEventLoop, headers: dict):
         self.__headers__ = headers
         self.__loop__ = loop
-        self.__data__ = self.get_guilds()
+        self.__data__ = self._get_guilds()
 
     async def __list_guilds(self):
         async with aiohttp.ClientSession() as session:
             async with session.get(BASE + '/users/@me/guilds', headers=self.__headers__) as response:
                 return await response.json()
 
-    def get_guilds(self):
+    def _get_guilds(self):
         task = self.__loop__.create_task(self.__list_guilds())
         result = self.__loop__.run_until_complete(task)
         return result
@@ -337,4 +336,23 @@ class PartialGuilds:
 
     def __repr__(self):
         return f'Total {self.__len__()} {self.__class__.__name__}!'
+
+
+
+def get_guild(headers: dict, **kwargs) -> Guild | PartialGuilds:
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    partial = kwargs.get('partial', False)
+    guild_id = kwargs.get('guild_id', None)
+
+    if not partial:
+        if not guild_id:
+            raise ValueError('Guild id must be given if partial is set to False!')
+        return Guild(guild_id, loop, headers)
+    else:
+        return PartialGuilds(loop, headers)
 

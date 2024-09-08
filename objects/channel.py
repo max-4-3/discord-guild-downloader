@@ -1,6 +1,6 @@
-from typing import Optional, Literal
+from typing import Optional
 
-from objects import DISCORD_BASE
+from objects.constants import DISCORD_BASE
 
 
 class Channel:
@@ -24,12 +24,12 @@ class Channel:
         self.name: str = data['name']
         self.id = data['id']
         self.guild_id = data['guild_id']
-        self.overwrites = data['overwrites']
+        self.overwrites = data.get('permission_overwrites')
         self.topic: Optional[str] = data.get('topic')
         self.position: int = data['position']
         self.nsfw: bool = data.get('nsfw', False)
         self.slowmode_delay: float = data.get('rate_limit_per_user', 0)
-        self.type: Literal[0, 5] = data.get('type', self.type)
+        self.type = data.get('type', 0)
         self.jump_url = f'{DISCORD_BASE}/channels/{self.guild_id}/{self.id}'
 
     def __eq__(self, other):
@@ -42,7 +42,10 @@ class Channel:
         for attr in self.__slots__:
             if attr[0] == '_':
                 continue
-            value = getattr(self, attr, None)
+            try:
+                value = getattr(self, attr, None)
+            except Exception:
+                value = None
             if value is None:
                 continue
             yield attr, value
