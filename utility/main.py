@@ -52,15 +52,20 @@ class Main:
 
     def _set_or_get_download_path(self, **kwargs):
         config = utility.store.read_config()
-        if config.get('path') is not None:
+
+        # Check if a new path is provided via kwargs
+        if kwargs.get('path'):
+            self.downloadPath = kwargs.get('path')
+            utility.store.store_config(path=self.downloadPath)
+
+        # If no new path is provided, use the path from the config
+        elif config.get('path'):
             self.downloadPath = config.get('path')
+
+        # If no path is stored in the config, use the current working directory
         else:
-            if kwargs.get('path'):
-                utility.store.store_config(path=kwargs.get('path'))
-                self.downloadPath = kwargs.get('path')
-            else:
-                utility.store.store_config(path=os.getcwd())
-                self.downloadPath = os.getcwd()
+            self.downloadPath = os.getcwd()
+            utility.store.store_config(path=self.downloadPath)
 
     def _set_or_get_event_loop_(self):
         try:
@@ -70,20 +75,20 @@ class Main:
             asyncio.set_event_loop(self.__loop__)
 
     def confirmation(self) -> bool:
-        info = (f'Your Info:\n'
+        info = (f'Your Info:'
                 f'\nName: {self.client.display_name}'
                 f'\nContact: {self.client.contact}\n'
-                f'Guild Info:\n'
+                f'Guild Info:'
                 f'\nName: {self.guild.name}'
                 f'\nID: {self.guild.id}\n'
-                f'Owner Info:\n'
+                f'Owner Info:'
                 f'\nName: {self.owner.display_name}'
                 f'\nID: {self.owner.id}'
                 f'\nbio: {self.owner.bio}\n')
         print('is this info correct? [y/n]')
         print(info)
         while True:
-            choice = input('\n:')
+            choice = input(':')
             if not choice:
                 print('Choose b/w yes and no')
             elif choice.lower() not in ['yes', 'no', 'n', 'y']:
@@ -113,6 +118,8 @@ class Main:
             choice = input('-> ')
             if not choice:
                 self.showOptions()
+            elif choice in ['exit', 'stop']:
+                break
             elif not choice.isdigit():
                 self.showOptions()
             elif int(choice) > len(menu):
@@ -129,8 +136,8 @@ class Main:
                     self.showOptions()
             else:
                 start_time = time.perf_counter()
-                Downloader(self.guild, self.downloadPath, int(choice))
+                task = Downloader(self.guild, self.downloadPath, int(choice))
                 end_time = time.perf_counter()
 
-                print(f"Took {end_time - start_time:.2f}s to complete!")
-
+                print(f"Took {end_time - start_time:.2f}s to complete!"
+                      f"\nReport: {task.report()}")

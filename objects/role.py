@@ -1,3 +1,6 @@
+from objects.constants import ASSET_BASE
+
+
 class Role:
     __slots__ = (
         'id',
@@ -8,7 +11,9 @@ class Role:
         'managed',
         'mentionable',
         'hoist',
-        'guild'
+        'guild',
+        'emoji',
+        'icon',
     )
 
     def __init__(self, data: dict):
@@ -24,6 +29,12 @@ class Role:
         self.hoist: bool = data.get('hoist', False)
         self.managed: bool = data.get('managed', False)
         self.mentionable: bool = data.get('mentionable', False)
+        icon_hash = data.get('icon')
+        if not icon_hash:
+            self.icon = None
+        else:
+            self.icon = ASSET_BASE + '/role-icons/' + str(self.id) + '/' + icon_hash + '.png' + '?size=2048'
+        self.emoji = data.get('unicode_emoji')
 
     def __str__(self) -> str:
         return self.name

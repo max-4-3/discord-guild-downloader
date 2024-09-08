@@ -22,19 +22,25 @@ class DirectoryHelper:
     def __init__(self, name: str, path: str):
         self.dir_name = name
         if platform_name().lower() in ['windows', 'nt']:
-            self.sanitize_dir_name()
+            self.dir_name = self.sanitize_dir_name(self.dir_name)
         self.dir_name = os.path.join(path if path else os.getcwd(), self.dir_name)
         self.name = os.path.basename(self.dir_name)
 
-    def sanitize_dir_name(self):
+    @staticmethod
+    def sanitize_dir_name(filename):
         """
         Replace any reserved characters in the directory name for Windows systems.
         """
         reserved_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
         for char in reserved_chars:
-            self.dir_name = self.dir_name.replace(char, '_')
+            filename = filename.replace(char, '_')
 
-        self.dir_name = self.dir_name.strip() or 'File_Name_Empty'
+        filename = filename.strip()
+
+        if not filename:
+            filename = 'File Name is Empty lol'
+
+        return filename
 
     def create_directory(self, sub_dir: str) -> str:
         """
@@ -97,18 +103,29 @@ class Downloader(DirectoryHelper):
                 for file in files:
                     if isinstance(file, dict):  # Handle case for dict file type
                         is_animated = file.get('animated', False)
-                        file_name = file.get('name', 'No Name') + ('.gif' if is_animated else '.png')
-                        sub_dir = (file.__class__.__name__ if not isinstance(file, list) else 'Resources') + ('gifs' if is_animated else 'images')
+                        file_name = DirectoryHelper.sanitize_dir_name(file.get('name', 'No Name')) + (
+                            '.gif' if is_animated else '.png')
+                        sub_dir = os.path.join(
+                            (file.__class__.__name__ if not isinstance(file, list) else 'Resources'),
+                            ('gifs' if is_animated else 'images')
+                        )
                         download_path = self.create_directory(sub_dir)
                     else:  # Emojis or Stickers
-                        file_name = file.name + ('.gif' if file.animated else '.png')
-                        sub_dir = (file.__class__.__name__ if not isinstance(file, list) else 'Resources') + ('gifs' if is_animated else 'images')
+                        file_name = DirectoryHelper.sanitize_dir_name(file.name) + ('.gif' if file.animated else '.png')
+                        sub_dir = os.path.join(
+                            (file.__class__.__name__ if not isinstance(file, list) else 'Resources'),
+                            ('gifs' if file.animated else 'images')
+                        )
                         download_path = self.create_directory(sub_dir)
 
                     file_path = os.path.join(download_path, file_name)
 
                     try:
-                        file_size = await self._download_file(session, file.get('url') if isinstance(file, dict) else file.url, file_path)
+                        file_size = await self._download_file(
+                            session,
+                            file.get('url') if isinstance(file, dict) else file.url,
+                            file_path
+                        )
                         print(f'"{file_name}" downloaded ({file_size:.2f} KB)!')
                         total_size += file_size
                     except Exception as e:
