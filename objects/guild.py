@@ -338,7 +338,6 @@ class PartialGuilds:
         return f'Total {self.__len__()} {self.__class__.__name__}!'
 
 
-
 def get_guild(headers: dict, **kwargs) -> Guild | PartialGuilds:
     try:
         loop = asyncio.get_running_loop()
@@ -355,4 +354,3 @@ def get_guild(headers: dict, **kwargs) -> Guild | PartialGuilds:
         return Guild(guild_id, loop, headers)
     else:
         return PartialGuilds(loop, headers)
-
