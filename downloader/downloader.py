@@ -242,7 +242,7 @@ class Downloader(DirectoryHelper):
                 task()
                 sleep(uniform(0.5, 1.2))  # Simulate processing time between tasks
             except Exception as e:
-                print(f"[{task.__name__.replace('_', " ").title()}] Task failed: {e}")
+                print(f"[{task.__name__.replace('_', ' ').title()}] Task failed: {e}")
 
         # Final report of the total download
         print(f"Total size downloaded: {self.total_size / 1024:.2f} MB")

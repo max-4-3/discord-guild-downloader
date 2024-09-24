@@ -1,5 +1,3 @@
-import os
-
 from objects.guild import get_guild
 from utility.cls import cls
 from utility.store import read_config, store_config
@@ -31,10 +29,7 @@ def get_token():
             continue
 
         elif token in ["h", "help"]:
-            try:
-                os.system("start https://github.com/max-4-3/discord-guild-downloader/blob/main/how%20to%20get%20token.md")
-            except:
-                print('https://github.com/max-4-3/discord-guild-downloader/blob/main/how%20to%20get%20token.md')
+            print('https://github.com/max-4-3/discord-guild-downloader/blob/main/how%20to%20get%20token.md')
             continue
 
         elif not is_valid_string(token):
