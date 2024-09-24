@@ -194,6 +194,8 @@ class Guild:
 
     def __str__(self):
         from datetime import datetime
+        features = '\t\n'.expandtabs(4).join(
+            [feature.strip().replace('_', ' ').title() for feature in self._features if feature])
         r = f"""
 Basic Info:
 \tName: {self.name}
@@ -228,12 +230,12 @@ Advance Info:
 \t{self.premium_level}
 \t{self.verification_level}
 \t{self.name} has following features:
-{'\t\n'.expandtabs(4).join([feature.strip().replace('_', ' ').title() for feature in self._features if feature])}
+{features}
 
 *This info is gathered at:
 {datetime.now().strftime('%Y-%m-%d %H:%M:%S%p')}
 """
-        return r.expandtabs(2).strip()
+        return r.strip().expandtabs(3)
 
     def __repr__(self):
         return self.__str__()
