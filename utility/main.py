@@ -22,6 +22,8 @@ class Main:
 
     def _set_important(self):
 
+        utility.cls.cls(art=main_art)
+
         # Sets event loop
         if self.__loop__ is None:
             self._set_or_get_event_loop_()
@@ -75,16 +77,19 @@ class Main:
             asyncio.set_event_loop(self.__loop__)
 
     def confirmation(self) -> bool:
+
+        utility.cls.cls(art=main_art)
+
         info = (f'Your Info:'
-                f'\nName: {self.client.display_name}'
-                f'\nContact: {self.client.contact}\n'
+                f'\n\tName: {self.client.display_name}'
+                f'\n\tContact: {self.client.contact}\n'
                 f'Guild Info:'
-                f'\nName: {self.guild.name}'
-                f'\nID: {self.guild.id}\n'
+                f'\n\tName: {self.guild.name}'
+                f'\n\tID: {self.guild.id}\n'
                 f'Owner Info:'
-                f'\nName: {self.owner.display_name}'
-                f'\nID: {self.owner.id}'
-                f'\nbio: {self.owner.bio}\n')
+                f'\n\tName: {self.owner.display_name}'
+                f'\n\tID: {self.owner.id}'
+                f'\n\tbio: {self.owner.bio}\n').expandtabs(2)
         print('is this info correct? [y/n]')
         print(info)
         while True:
@@ -112,7 +117,7 @@ class Main:
             7: f"Change Download Dir\n[{self.downloadPath}]"
         }
         for idx, name in menu.items():
-            print(idx, name)
+            print(f"{idx}.", name)
         print('Choose:\n')
         while True:
             choice = input('-> ')
@@ -141,3 +146,4 @@ class Main:
 
                 print(f"Took {end_time - start_time:.2f}s to complete!"
                       f"\nReport: {task.report()}")
+                break

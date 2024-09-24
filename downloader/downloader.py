@@ -1,4 +1,5 @@
 import os
+from asyncio import create_task, gather
 from asyncio import run
 from json import dump
 from platform import system as platform_name
@@ -61,6 +62,8 @@ class Downloader(DirectoryHelper):
         self.choice = choice
         self.guild = guild
         self.total_size = 0  # in KB
+        self.total_files = 0
+        self.total_gifs = 0
         self.path = self.dir_name
 
         self.choice_base_download()
@@ -91,50 +94,84 @@ class Downloader(DirectoryHelper):
                 f.write(content)
             return len(content) / 1024
 
+    def _get_downloaded_size(self) -> dict[str, float]:
+        size_in_byte = 0
+        total_files = 0
+        total_gifs = 0
+        for root, _, files in os.walk(self.path):
+            for file in files:
+                name, ext = os.path.splitext(file)
+                if ext == ".gif":
+                    total_gifs += 1
+                file_path = os.path.join(root, file)
+                if not os.path.isfile(file_path):
+                    continue
+                total_files += 1
+                file_size = os.path.getsize(file_path)
+                size_in_byte += file_size
+        return {
+            "total": size_in_byte / 1024,
+            "gifs": total_gifs,
+            "images": total_files - total_gifs,
+            "total files": total_files
+        }
+
+    async def _download(self, session, file, bar):
+        if isinstance(file, dict):  # Handle case for dict file type
+            is_animated = file.get('animated', False)
+            file_name = DirectoryHelper.sanitize_dir_name(file.get('name', 'No Name')) + (
+                '.gif' if is_animated else '.png')
+            sub_dir = os.path.join(
+                (file.__class__.__name__ if not isinstance(file, list) else 'Resources'),
+                ('gifs' if is_animated else 'images')
+            )
+            download_path = self.create_directory(sub_dir)
+        else:  # Emojis or Stickers
+            file_name = DirectoryHelper.sanitize_dir_name(file.name) + ('.gif' if file.animated else '.png')
+            sub_dir = os.path.join(
+                (file.__class__.__name__ if not isinstance(file, list) else 'Resources'),
+                ('gifs' if file.animated else 'images')
+            )
+            download_path = self.create_directory(sub_dir)
+
+        file_path = os.path.join(download_path, file_name)
+
+        try:
+            file_size = await self._download_file(
+                session,
+                file.get('url') if isinstance(file, dict) else file.url,
+                file_path
+            )
+            print(f'"{file_name}" downloaded ({file_size:.2f} KB)!')
+        except Exception as e:
+            print(f"Failed to download {file_name}: {e}")
+        finally:
+            bar()
+
     async def download(self, files: Union[Emojis, Stickers, list[dict]]):
         """
         Downloads a list of files (Emojis or Stickers).
         """
         download_type = files.__class__.__name__.title() if not isinstance(files, list) else "Resources"
-        total_size = 0
 
         async with aiohttp.ClientSession() as session:
             with alive_bar(len(files), title=f'Downloading {download_type}...', spinner='dots') as bar:
+                # Creates async task!
+                tasks = []
                 for file in files:
-                    if isinstance(file, dict):  # Handle case for dict file type
-                        is_animated = file.get('animated', False)
-                        file_name = DirectoryHelper.sanitize_dir_name(file.get('name', 'No Name')) + (
-                            '.gif' if is_animated else '.png')
-                        sub_dir = os.path.join(
-                            (file.__class__.__name__ if not isinstance(file, list) else 'Resources'),
-                            ('gifs' if is_animated else 'images')
-                        )
-                        download_path = self.create_directory(sub_dir)
-                    else:  # Emojis or Stickers
-                        file_name = DirectoryHelper.sanitize_dir_name(file.name) + ('.gif' if file.animated else '.png')
-                        sub_dir = os.path.join(
-                            (file.__class__.__name__ if not isinstance(file, list) else 'Resources'),
-                            ('gifs' if file.animated else 'images')
-                        )
-                        download_path = self.create_directory(sub_dir)
+                    tasks.append(create_task(self._download(session, file, bar)))
+                if len(tasks) == 0:
+                    print("Error occurred while creating tasks!")
+                    return
+                else:
+                    # executes the task
+                    await gather(*tasks)
 
-                    file_path = os.path.join(download_path, file_name)
-
-                    try:
-                        file_size = await self._download_file(
-                            session,
-                            file.get('url') if isinstance(file, dict) else file.url,
-                            file_path
-                        )
-                        print(f'"{file_name}" downloaded ({file_size:.2f} KB)!')
-                        total_size += file_size
-                    except Exception as e:
-                        print(f"Failed to download {file_name}: {e}")
-                    finally:
-                        bar()
-
-        self.total_size += total_size
-        print(f"All files downloaded ({total_size / 1024:.2f} MB).")
+        download_stats = self._get_downloaded_size()
+        self.total_size += download_stats.get("total", 0)
+        self.total_gifs = download_stats.get("gifs", 0)
+        self.total_files = download_stats.get("images", 0)
+        print(f"All {len(files)} {download_type} files downloaded.")
 
     def save_json(self, data: List[dict], file_name: str):
         """
@@ -214,4 +251,8 @@ class Downloader(DirectoryHelper):
     def report(self):
         if self.total_size == 0:
             return f"Files saved at {self.path}"
-        return f"Total size downloaded: {self.total_size / 1024:.2f} MB\nFiles saved at {self.path}"
+        return (f"Files saved at {self.path}"
+                f"\nTotal Size: {self.total_size / 1024:.2f}MB"
+                f"\nTotal Files downloaded: {self.total_files}"
+                f"\nTotal Images Downloaded: {self.total_files - self.total_gifs}"
+                f"\nTotal Gifs Downloaded: {self.total_gifs}")
