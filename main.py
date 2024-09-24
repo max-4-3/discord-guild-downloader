@@ -10,7 +10,7 @@ if __name__ == '__main__':
                 break
             main.showOptions()
             if input("Retry? (y/n): \n").lower().strip() in ["y", "yes"]:
-                continue
+                main.retry()
             else:
                 break
         except KeyboardInterrupt:
@@ -18,6 +18,6 @@ if __name__ == '__main__':
         except Exception as e:
             print(f"Something went wrong: {repr(e)}")
             if input("Retry? (y/n): \n").lower().strip() in ["y", "yes"]:
-                continue
+                main.retry()
             else:
                 break

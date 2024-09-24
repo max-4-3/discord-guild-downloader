@@ -124,7 +124,7 @@ class Main:
             if not choice:
                 self.showOptions()
             elif choice in ['exit', 'stop']:
-                break
+                return
             elif not choice.isdigit():
                 self.showOptions()
             elif int(choice) > len(menu):
@@ -146,4 +146,9 @@ class Main:
 
                 print(f"Took {end_time - start_time:.2f}s to complete!"
                       f"\nReport: {task.report()}")
-                break
+                return 
+
+
+    def retry(self):
+    	self._destroy(guild=True)
+        
