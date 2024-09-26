@@ -146,8 +146,7 @@ class Main:
 
                 print(f"Took {end_time - start_time:.2f}s to complete!"
                       f"\nReport: {task.report()}")
-                return 
-
+                break
 
     def retry(self):
     	self._destroy(guild=True)
