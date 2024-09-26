@@ -100,17 +100,20 @@ class Downloader(DirectoryHelper):
         total_gifs = 0
         for root, _, files in os.walk(self.path):
             for file in files:
+
+                if not os.path.isfile(file_path):
+                    continue
+                
                 name, ext = os.path.splitext(file)
                 if ext == ".gif":
                     total_gifs += 1
                 file_path = os.path.join(root, file)
-                if not os.path.isfile(file_path):
-                    continue
                 total_files += 1
                 file_size = os.path.getsize(file_path)
                 size_in_byte += file_size
+        
         return {
-            "total": size_in_byte / 1024,
+            "total": size_in_byte / (1024 * 1024),
             "gifs": total_gifs,
             "images": total_files - total_gifs,
             "total files": total_files
