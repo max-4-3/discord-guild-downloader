@@ -33,7 +33,7 @@ def update_repository(repo_path):
 
 def main():
     """Main function to check dependencies and update the project."""
-    repo_path = '.'  # Set this to your project path if needed.
+    repo_path = os.path.dirname(__file__)  # Set this to your project path if needed.
 
     if not check_dependencies():
         return
