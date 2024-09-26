@@ -194,8 +194,9 @@ class Guild:
 
     def __str__(self):
         from datetime import datetime
-        features = '\t\n'.expandtabs(4).join(
-            [feature.strip().replace('_', ' ').title() for feature in self._features if feature])
+        features = '\n'.join(
+            [f"\t{feature.strip().replace('_', ' ').title()}".expandtabs(6) for feature in self._features if feature]
+        )
         r = f"""
 Basic Info:
 \tName: {self.name}
