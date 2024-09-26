@@ -1,8 +1,15 @@
 from sys import exit
+import updater
 
 from utility.main import Main
 
+def check_for_update():
+    """Function to check for update!"""
+    print("Checking for updates")
+    updater.main()
+
 if __name__ == '__main__':
+    check_for_update()
     main = Main()
     while True:
         try:
