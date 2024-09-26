@@ -241,8 +241,6 @@ class Downloader(DirectoryHelper):
         print(f"Files saved at {self.path}")
 
     def report(self):
-        if self.total_size == 0:
-            return f"Files saved at {self.path}"
         return (f"Files saved at {self.path}"
                 f"\nTotal Files downloaded: {self.total_files}"
                 f"\nTotal Images Downloaded: {self.total_files - self.total_gifs}"
