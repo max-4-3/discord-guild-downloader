@@ -61,7 +61,6 @@ class Downloader(DirectoryHelper):
         super().__init__(guild.name, path=download_path)
         self.choice = choice
         self.guild = guild
-        self.total_size = 0  # in KB
         self.total_files = 0
         self.total_gifs = 0
         self.path = self.dir_name
@@ -95,7 +94,6 @@ class Downloader(DirectoryHelper):
             return len(content) / 1024
 
     def _get_downloaded_size(self) -> dict[str, float]:
-        size_in_byte = 0
         total_files = 0
         total_gifs = 0
         for root, _, files in os.walk(self.path):
@@ -105,11 +103,8 @@ class Downloader(DirectoryHelper):
                     total_gifs += 1
                 file_path = os.path.join(root, file)
                 total_files += 1
-                file_size = os.path.getsize(file_path)
-                size_in_byte += file_size
         
         return {
-            "total": size_in_byte / (1024 * 1024),
             "gifs": total_gifs,
             "images": total_files - total_gifs,
             "total files": total_files
@@ -167,7 +162,6 @@ class Downloader(DirectoryHelper):
                     await gather(*tasks)
 
         download_stats = self._get_downloaded_size()
-        self.total_size += download_stats.get("total", 0)
         self.total_gifs = download_stats.get("gifs", 0)
         self.total_files = download_stats.get("images", 0)
         print(f"All {len(files)} {download_type} files downloaded.")
@@ -244,14 +238,12 @@ class Downloader(DirectoryHelper):
                 print(f"[{task.__name__.replace('_', ' ').title()}] Task failed: {e}")
 
         # Final report of the total download
-        print(f"Total size downloaded: {self.total_size:.2f} MB")
         print(f"Files saved at {self.path}")
 
     def report(self):
         if self.total_size == 0:
             return f"Files saved at {self.path}"
         return (f"Files saved at {self.path}"
-                f"\nTotal Size: {self.total_size:.2f}MB"
                 f"\nTotal Files downloaded: {self.total_files}"
                 f"\nTotal Images Downloaded: {self.total_files - self.total_gifs}"
                 f"\nTotal Gifs Downloaded: {self.total_gifs}")
