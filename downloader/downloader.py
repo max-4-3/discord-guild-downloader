@@ -244,14 +244,14 @@ class Downloader(DirectoryHelper):
                 print(f"[{task.__name__.replace('_', ' ').title()}] Task failed: {e}")
 
         # Final report of the total download
-        print(f"Total size downloaded: {self.total_size / 1024:.2f} MB")
+        print(f"Total size downloaded: {self.total_size:.2f} MB")
         print(f"Files saved at {self.path}")
 
     def report(self):
         if self.total_size == 0:
             return f"Files saved at {self.path}"
         return (f"Files saved at {self.path}"
-                f"\nTotal Size: {self.total_size / 1024:.2f}MB"
+                f"\nTotal Size: {self.total_size:.2f}MB"
                 f"\nTotal Files downloaded: {self.total_files}"
                 f"\nTotal Images Downloaded: {self.total_files - self.total_gifs}"
                 f"\nTotal Gifs Downloaded: {self.total_gifs}")
