@@ -6,6 +6,7 @@ from platform import system as platform_name
 from random import uniform
 from time import sleep
 from typing import List, Union
+import subprocess as sp
 
 import aiohttp
 from alive_progress import alive_bar
@@ -13,6 +14,7 @@ from alive_progress import alive_bar
 from objects.emoji import Emojis
 from objects.guild import Guild
 from objects.sticker import Stickers
+from utility import is_android
 
 
 class DirectoryHelper:
@@ -50,6 +52,13 @@ class DirectoryHelper:
         path = os.path.join(self.dir_name, sub_dir)
         os.makedirs(path, exist_ok=True)
         return path
+    
+    def update_media(self):
+        if not is_android:
+            return
+        
+        command = f"am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://{self.dir_name}"
+        return sp.run(command, stdin=sp.DEVNULL, stdout=sp.DEVNULL, capture_output=False, text=False).returncode == 1
 
 
 class Downloader(DirectoryHelper):
@@ -81,6 +90,8 @@ class Downloader(DirectoryHelper):
             raise KeyError('Choice is not Implemented!')
 
         download_dict[self.choice]()
+        print("Updating Media...")
+        print("Done!" if self.update_media() else "Something Went Wrong :(")
 
     @staticmethod
     async def _download_file(session: aiohttp.ClientSession, url: str, file_path: str) -> float:
@@ -98,10 +109,12 @@ class Downloader(DirectoryHelper):
         total_gifs = 0
         for root, _, files in os.walk(self.path):
             for file in files:
-                name, ext = os.path.splitext(file)
+                ext = os.path.splitext(file)[1]
                 if ext == ".gif":
                     total_gifs += 1
                 file_path = os.path.join(root, file)
+                if not os.path.isfile(file_path):
+                    continue
                 total_files += 1
         
         return {
@@ -111,7 +124,9 @@ class Downloader(DirectoryHelper):
         }
 
     async def _download(self, session, file, bar):
-        if isinstance(file, dict):  # Handle case for dict file type
+        
+        # Handle case for dict file type
+        if isinstance(file, dict):
             is_animated = file.get('animated', False)
             file_name = DirectoryHelper.sanitize_dir_name(file.get('name', 'No Name')) + (
                 '.gif' if is_animated else '.png')
@@ -120,7 +135,9 @@ class Downloader(DirectoryHelper):
                 ('gifs' if is_animated else 'images')
             )
             download_path = self.create_directory(sub_dir)
-        else:  # Emojis or Stickers
+        
+        # Emojis or Stickers
+        else:
             file_name = DirectoryHelper.sanitize_dir_name(file.name) + ('.gif' if file.animated else '.png')
             sub_dir = os.path.join(
                 (file.__class__.__name__ if not isinstance(file, list) else 'Resources'),
