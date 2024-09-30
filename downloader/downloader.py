@@ -54,11 +54,14 @@ class DirectoryHelper:
         return path
     
     def update_media(self):
+        """
+        Updates the Download directory so that android apps can recognize the file changes.
+        """
         if not is_android:
             return
         
         command = f"am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://{os.path.split(self.dir_name)[0]}"
-        sp.Popen(command, stdin=sp.DEVNULL, stdout=sp.DEVNULL, stderr=sp.DEVNULL, capture_output=False, text=False)
+        sp.Popen(command, stdin=sp.DEVNULL, stdout=sp.DEVNULL, stderr=sp.DEVNULL, text=False)
         return 
 
 
