@@ -58,8 +58,9 @@ class DirectoryHelper:
             return
         
         command = f"am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d \"file://{self.dir_name}\""
-        return sp.run(command.split(" "), stdin=sp.DEVNULL, stdout=sp.DEVNULL, capture_output=False, text=False).returncode == 1
-
+        print(command)
+        print(sp.run(command.split(" "), stdin=sp.DEVNULL, stdout=sp.DEVNULL, capture_output=True, text=True).stderr)
+        return 
 
 class Downloader(DirectoryHelper):
     """
