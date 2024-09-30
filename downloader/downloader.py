@@ -57,10 +57,10 @@ class DirectoryHelper:
         if not is_android:
             return
         
-        command = f"am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d \"file://{self.dir_name}\""
-        print(command)
-        print(sp.run(command.split(" "), stdin=sp.DEVNULL, stdout=sp.DEVNULL, capture_output=True, text=True).stderr)
+        command = f"am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://{os.path.split(self.dir_name)[0]}"
+        sp.Popen(command, stdin=sp.DEVNULL, stdout=sp.DEVNULL, stderr=sp.DEVNULL, capture_output=False, text=False)
         return 
+
 
 class Downloader(DirectoryHelper):
     """
@@ -91,8 +91,7 @@ class Downloader(DirectoryHelper):
             raise KeyError('Choice is not Implemented!')
 
         download_dict[self.choice]()
-        print("Updating Media...")
-        print("Done!" if self.update_media() else "Something Went Wrong :(")
+        self.update_media()
 
     @staticmethod
     async def _download_file(session: aiohttp.ClientSession, url: str, file_path: str) -> float:
