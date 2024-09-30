@@ -61,7 +61,7 @@ class DirectoryHelper:
             return
         
         command = f"am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://{os.path.split(self.dir_name)[0]}"
-        sp.Popen(command, stdin=sp.DEVNULL, stdout=sp.DEVNULL, stderr=sp.DEVNULL, text=False)
+        sp.run(command, stdin=sp.DEVNULL, stdout=sp.DEVNULL, stderr=sp.DEVNULL, text=False, capture_output=False, shell=True)
         return 
 
 
@@ -149,6 +149,10 @@ class Downloader(DirectoryHelper):
             download_path = self.create_directory(sub_dir)
 
         file_path = os.path.join(download_path, file_name)
+
+        if os.path.exists(file_path):
+            print("Already Downloaded!")
+            return
 
         try:
             file_size = await self._download_file(
