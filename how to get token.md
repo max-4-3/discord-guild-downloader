@@ -4,7 +4,7 @@
 
 ## 🌐 Browser (Any)
 
-First of all, open [discord.com](https://discord.com) and log into your account!
+First of all, open [Discord](https://discord.com) and log into your account!
 
 ---
 
@@ -48,6 +48,23 @@ First of all, open [discord.com](https://discord.com) and log into your account!
    Click on the Search Bar (on the Discord.com page) and type `Discord`.  
    Click on the Discord bookmark which has `/mobile bookmarks` below it instead of a URL.  
    Now, your token will be downloaded in `Downloads` as `token.txt`.
+
+5. **Root**  
+   ## ⚠️ Make Sure You have Root Enabled  
+   After that head to 
+   ```bash
+   cd /data/data/*discord*/shared*
+   ```
+   Then Execute this command:  
+   ```bash
+   sed -n 's/.*<string name="token">\([^<]*\)<\/string>.*/\1/p' Cache*.xml | sed 's/&quot;/"/g; s/&amp;/\&/g; s/&#39;/'"'"'/g'
+   ```
+   And Copy the value in b/w Quotes.   
+   or Else You can write to a file: 
+   ```bash
+   sed -n 's/.*<string name="token">\([^<]*\)<\/string>.*/\1/p' Cache*.xml | sed 's/&quot;/"/g; s/&amp;/\&/g; s/&#39;/'"'"'/g' > /sdcard/Download/token.txt
+   ```
+   And there you have your token :D ( in Downlaods Folder )
 
 ---
 
