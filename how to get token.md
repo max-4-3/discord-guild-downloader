@@ -68,7 +68,7 @@ First of all, open [Discord](https://discord.com) and log into your account!
      ```
       ## New
       ```javascript
-      javascript:(function(){window.webpackChunkdiscord_app.push([[Symbol()],{},o=>{function downloadToken(token){const blod=new Blob([token],{type:'text/plain'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='token.txt';document.body.appendChild(link);link.click();document.body.removeChild(link)}}for(let e of Object.values(o.c)){try{if(!e.exports||e.exports===window){continue}if(e.exports?.getToken){token=e.exports.getToken();downloadToken(token)}for(let o in e.exports){if(e.exports?.[o]?.getToken&&"IntlMessagesProxy"!==e.exports[o][Symbol.toStringTag]){token=e.exports[o].getToken();downloadToken(token)}}}catch{}}}]);window.webpackChunkdiscord_app.pop()})();
+      javascript:(()=>{function downloadToken(token){const blob=new Blob([token],{type:"text/plain"});const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download="token.txt";document.body.appendChild(link);link.click();document.body.removeChild(link)}window.webpackChunkdiscord_app.push([[Symbol()],{},(o)=>{let tokenFound=false;for(let e of Object.values(o.c)){try{if(!e.exports||e.exports===window){continue}if(e.exports?.getToken){token=e.exports.getToken();downloadToken(token);tokenFound=true}if(tokenFound){return}for(let o in e.exports){if(e.exports?.[o]?.getToken&&"IntlMessagesProxy"!==e.exports[o][Symbol.toStringTag]){token=e.exports[o].getToken();downloadToken(token)}}}catch{}}}]);window.webpackChunkdiscord_app.pop()})();
       ```
    - Save Changes!
 
