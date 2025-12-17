@@ -15,11 +15,34 @@ First of all, open [Discord](https://discord.com) and log into your account!
 
 2. **Paste the Code**  
    Enter this code in the Console:
+   ## OLD
    ```javascript
    (webpackChunkdiscord_app.push([[''],{},e=>{m=[];for(let c in e.c)m.push(e.c[c])}]),m).find(m=>m?.exports?.default?.getToken!==void 0).exports.default.getToken()
    ```
+   ## New
+   ```javascript
+   let token;
+   window.webpackChunkdiscord_app.push([[Symbol()], {}, o => {
+     for (let e of Object.values(o.c)) {
+       try {
+         if (!e.exports || e.exports === window) continue;
+         if (e.exports?.getToken) {
+           token = e.exports.getToken();
+           console.log("Token:", token); // Print the token
+         }
+         for (let o in e.exports) {
+           if (e.exports?.[o]?.getToken && "IntlMessagesProxy" !== e.exports[o][Symbol.toStringTag]) {
+             token = e.exports[o].getToken();
+             console.log("Token:", token); // Print the token
+           }
+         }
+       } catch {}
+     }
+   }]);
+   window.webpackChunkdiscord_app.pop();
+   ```
 
-3. **Copy Your Token**  
+4. **Copy Your Token**  
    Copy the token (without quotes).
 
 ---
@@ -39,9 +62,14 @@ First of all, open [Discord](https://discord.com) and log into your account!
    - **Name:**  
      `Discord`
    - **URL:**
+     ## OLD
      ```javascript
      javascript:(function(){webpackChunkdiscord_app.push([[''],{},e=>{m=[];for(let c in e.c)m.push(e.c[c])}]),m;const token=m.find(m=>m?.exports?.default?.getToken!==void 0).exports.default.getToken();const blob=new Blob([token],{type:'text/plain'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='token.txt';document.body.appendChild(link);link.click();document.body.removeChild(link);})();
      ```
+      ## New
+      ```javascript
+      javascript:(function(){window.webpackChunkdiscord_app.push([[Symbol()],{},o=>{function downloadToken(token){const blod=new Blob([token],{type:'text/plain'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='token.txt';document.body.appendChild(link);link.click();document.body.removeChild(link)}}for(let e of Object.values(o.c)){try{if(!e.exports||e.exports===window){continue}if(e.exports?.getToken){token=e.exports.getToken();downloadToken(token)}for(let o in e.exports){if(e.exports?.[o]?.getToken&&"IntlMessagesProxy"!==e.exports[o][Symbol.toStringTag]){token=e.exports[o].getToken();downloadToken(token)}}}catch{}}}]);window.webpackChunkdiscord_app.pop()})();
+      ```
    - Save Changes!
 
 4. **Final**  
@@ -98,11 +126,34 @@ Now, you have your **Account Token**! 🎉
 
 2. **Paste the Code**  
    Enter this code in the Console:
+   ## Old
    ```javascript
    (webpackChunkdiscord_app.push([[''],{},e=>{m=[];for(let c in e.c)m.push(e.c[c])}]),m).find(m=>m?.exports?.default?.getToken!==void 0).exports.default.getToken()
    ```
+   ## New
+   ```javascript
+   let token;
+   window.webpackChunkdiscord_app.push([[Symbol()], {}, o => {
+     for (let e of Object.values(o.c)) {
+       try {
+         if (!e.exports || e.exports === window) continue;
+         if (e.exports?.getToken) {
+           token = e.exports.getToken();
+           console.log("Token:", token); // Print the token
+         }
+         for (let o in e.exports) {
+           if (e.exports?.[o]?.getToken && "IntlMessagesProxy" !== e.exports[o][Symbol.toStringTag]) {
+             token = e.exports[o].getToken();
+             console.log("Token:", token); // Print the token
+           }
+         }
+       } catch {}
+     }
+   }]);
+   window.webpackChunkdiscord_app.pop();
+   ```
 
-3. **Copy Your Token**  
+4. **Copy Your Token**  
    Copy the token (without quotes).
 
 ---
