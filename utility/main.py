@@ -120,19 +120,20 @@ class Main:
             print(f"{idx}.", name)
         print('Choose:\n')
         while True:
-            choice = input('-> ')
+            choice = input('-> ').strip().lower()
             if not choice:
                 self.showOptions()
-            elif choice in ['exit', 'stop']:
+            elif choice in ['q', 'exit', 'stop']:
                 return
             elif not choice.isdigit():
                 self.showOptions()
             elif int(choice) > len(menu):
                 self.showOptions()
             elif int(choice) == 7:
+                # downloadPath will be created by Downloader
                 try:
                     from tkinter import filedialog
-                    newPath = filedialog.askdirectory(title='Download Directory', mustexist=True)
+                    newPath = filedialog.askdirectory(title='Download Directory')
                     self._set_or_get_download_path(path=newPath)
                     self.showOptions()
                 except (ModuleNotFoundError, ImportError, ImportWarning):

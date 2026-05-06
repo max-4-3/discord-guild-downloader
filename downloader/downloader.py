@@ -23,11 +23,11 @@ class DirectoryHelper:
     """
 
     def __init__(self, name: str, path: str):
-        self.dir_name = name
-        if platform_name().lower() in ['windows', 'nt']:
-            self.dir_name = self.sanitize_dir_name(self.dir_name)
-        self.dir_name = os.path.join(path if path else os.getcwd(), self.dir_name)
+        if not path:
+            path = os.getcwd()
+        self.dir_name = self.sanitize_dir_name(self.dir_name)
         self.name = os.path.basename(self.dir_name)
+        os.makedirs(self.dir_name, exist_ok=True)
 
     @staticmethod
     def sanitize_dir_name(filename):

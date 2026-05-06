@@ -3,7 +3,7 @@ from utility.cls import cls
 from utility.store import read_config, store_config
 
 
-def is_valid_string(string: str):
+def is_valid_token(string: str):
     return len(string.strip().split(".")) == 3
 
 
@@ -11,7 +11,7 @@ def get_token():
     config = read_config()
     if config and config.get('token'):
         while True:
-            token_choice = input(f"[?] Load token from file? (yes/no): \n").lower()
+            token_choice = input(f"[?] Load token from file? (y/n): \n").lower().strip()
             if token_choice not in ["yes", "no", "y", "n"]:
                 cls()
                 continue
@@ -23,18 +23,12 @@ def get_token():
     prompt = f"[+] Enter Your Account Token (h for help): \n"
     while True:
         token = input(prompt)
-        if not token:
-            cls()
-            print("please enter a token")
-            continue
-
-        elif token in ["h", "help"]:
-            print('https://github.com/max-4-3/discord-guild-downloader/blob/main/how%20to%20get%20token.md')
-            continue
-
-        elif not is_valid_string(token):
+        if not token or not is_valid_token(token):
             cls()
             print("invalid token given!")
+            continue
+        elif token in ["h", "help"]:
+            print('https://github.com/max-4-3/discord-guild-downloader/blob/main/how%20to%20get%20token.md')
             continue
 
         store_config(token=token)
