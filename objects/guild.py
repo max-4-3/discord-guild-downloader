@@ -70,12 +70,12 @@ class Guild:
         self._boost_perks: int = data.get('premium_tier', 0)
         self._mfa: int = data.get('mfa_level', 0)
         self._nsfw: int = data.get('nsfw_level', 0)
-        self._features: list[str | None] = data.get('features', [])
-        self._stickers: list[dict | None] = data.get('stickers', [])
-        self._emojis: list[dict | None] = data.get('emojis', [])
-        self._roles: list[dict | None] = data.get('roles', [])
-        self._channels: list[dict | None] = self.__do_async_work(path="channels")
-        self.owner = Owner(self.__loop__, data.get('owner_id'), self.__headers__)
+        self._features: list[str] = data.get('features', [])
+        self._stickers: list[dict] = data.get('stickers', [])
+        self._emojis: list[dict] = data.get('emojis', [])
+        self._roles: list[dict] = data.get('roles', [])
+        self._channels: list[dict] = self.__do_async_work(path="channels")
+        self.owner = Owner(self.__loop__, int(str(data.get('owner_id') or -1)), self.__headers__)
 
     @property
     def icon(self) -> None | str:
@@ -151,25 +151,25 @@ class Guild:
         return reference_json.get(self._nsfw)
 
     @property
-    def channels(self) -> Channels | None:
+    def channels(self) -> Channels:
         if not self._channels:
             self._channels = self.__do_async_work(path='channels')
         return Channels(self._channels)
 
     @property
-    def emojis(self) -> Emojis | None:
+    def emojis(self) -> Emojis:
         if not self._emojis:
             self._emojis = self.__do_async_work(path='emojis')
         return Emojis(self._emojis)
 
     @property
-    def roles(self) -> Roles | None:
+    def roles(self) -> Roles:
         if not self._roles:
             self.__do_async_work(path='roles')
         return Roles(self._roles)
 
     @property
-    def stickers(self) -> Stickers | None:
+    def stickers(self) -> Stickers:
         if not self._stickers:
             self.__do_async_work(path='stickers')
         return Stickers(self._stickers)
@@ -304,7 +304,7 @@ class PartialGuild:
         return f"{self.name} [{self.id}]"
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     def __int__(self):
         return self.id

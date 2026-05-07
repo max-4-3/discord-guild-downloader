@@ -1,8 +1,8 @@
-from objects.constants import ASSET_BASE
+from objects.constants import ASSET_BASE, ASSET_BASE_TWO
 
 
 class Sticker:
-    __slots__ = ('id', 'name', 'animated', 'url')
+    __slots__ = ('id', 'name', 'file_type', 'animated', 'url')
 
     def __init__(self, data: dict):
         self._from_data(data)
@@ -10,12 +10,19 @@ class Sticker:
     def _from_data(self, data: dict) -> None:
         self.id: int = int(data['id'])
         self.name: str = data['name']
-        format_type = data["format_type"]
-        if format_type == 4:
-            self.animated = True
-        else:
-            self.animated = False
-        self.url: str = f'{ASSET_BASE}/stickers/{self.id}.{"gif" if self.animated else "png"}?size=2048'
+
+        format_type: int = int(data["format_type"] or "1")
+        format_map = {
+            1: "png",
+            2: "png",  # apng
+            3: "json", # lottie
+            4: "gif",
+        }
+        base: str = ASSET_BASE if format_type != 4 else ASSET_BASE_TWO
+
+        self.animated: bool = format_type in [2, 4]
+        self.file_type: str = format_map.get(format_type) or "png"
+        self.url: str = f'{base}/stickers/{self.id}.{self.file_type}?size=2048'
 
     def __repr__(self) -> str:
         return f'<Sticker id={self.id} name={self.name!r} animated={self.animated}>'

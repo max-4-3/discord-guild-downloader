@@ -2,17 +2,17 @@ from objects.constants import ASSET_BASE
 
 
 class Emoji:
-    __slots__ = ("name", "id", "animated", "url")
+    __slots__ = ("id", "name", "file_type", "animated", "url")
 
     def __init__(self, data: dict):
         self._from_data(data)
 
     def _from_data(self, data: dict):
-        self.id: int = int(data.get("id"))
+        self.id: int = int(data.get("id") or "0")
         self.name: str = data.get("name", "no name lol")
         self.animated: bool = data.get("animated", False)
-        fmt = 'gif' if self.animated else 'png'
-        self.url = f'{ASSET_BASE}/emojis/{self.id}.{fmt}?size=2048'
+        self.file_type = 'gif' if self.animated else 'png'
+        self.url = f'{ASSET_BASE}/emojis/{self.id}.{self.file_type}?size=2048'
 
     def __iter__(self):
         for attr in self.__slots__:

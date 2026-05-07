@@ -2,7 +2,6 @@ import os
 from asyncio import create_task, gather
 from asyncio import run
 from json import dump
-from platform import system as platform_name
 from random import uniform
 from time import sleep
 from typing import List, Union
@@ -11,9 +10,9 @@ import subprocess as sp
 import aiohttp
 from alive_progress import alive_bar
 
-from objects.emoji import Emojis
+from objects.emoji import Emoji, Emojis
 from objects.guild import Guild
-from objects.sticker import Stickers
+from objects.sticker import Sticker, Stickers
 from utility import is_android
 
 
@@ -25,12 +24,13 @@ class DirectoryHelper:
     def __init__(self, name: str, path: str):
         if not path:
             path = os.getcwd()
-        self.dir_name = self.sanitize_dir_name(self.dir_name)
+
+        self.dir_name = os.path.join(path, self.sanitize_dir_name(name))
         self.name = os.path.basename(self.dir_name)
         os.makedirs(self.dir_name, exist_ok=True)
 
     @staticmethod
-    def sanitize_dir_name(filename):
+    def sanitize_dir_name(filename) -> str:
         """
         Replace any reserved characters in the directory name for Windows systems.
         """
@@ -62,13 +62,13 @@ class DirectoryHelper:
         
         command = f"am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://{os.path.split(self.dir_name)[0]}"
         sp.run(command, stdin=sp.DEVNULL, stdout=sp.DEVNULL, stderr=sp.DEVNULL, text=False, capture_output=False, shell=True)
-        return 
 
 
 class Downloader(DirectoryHelper):
     """
     The main class that handles downloading files such as Emojis, Stickers, and more.
     """
+    READ_SIZE: int = 1024 * 1024 * 4
 
     def __init__(self, guild: Guild, download_path: str, choice: int):
         super().__init__(guild.name, path=download_path)
@@ -102,10 +102,13 @@ class Downloader(DirectoryHelper):
         Downloads a file and returns its size in KB.
         """
         async with session.get(url) as response:
-            content = await response.read()
+            content: int = 0
             with open(file_path, 'wb') as f:
-                f.write(content)
-            return len(content) / 1024
+                while (resp := await response.content.read(Downloader.READ_SIZE)):
+                    f.write(resp)
+                    content += len(resp)
+
+            return content / 1024
 
     def _get_downloaded_size(self) -> dict[str, float]:
         total_files = 0
@@ -126,27 +129,28 @@ class Downloader(DirectoryHelper):
             "total files": total_files
         }
 
-    async def _download(self, session, file, bar):
-        
+    async def _download(self, session, file: Union[Emoji, Sticker, dict], bar):
+        file_name, download_path, url = "", "", ""
+        is_animated, file_type = False, "png"
+
         # Handle case for dict file type
         if isinstance(file, dict):
+            url = str(file.get("url"))
             is_animated = file.get('animated', False)
-            file_name = DirectoryHelper.sanitize_dir_name(file.get('name', 'No Name')) + (
-                '.gif' if is_animated else '.png')
-            sub_dir = os.path.join(
-                (file.__class__.__name__ if not isinstance(file, list) else 'Resources'),
-                ('gifs' if is_animated else 'images')
-            )
-            download_path = self.create_directory(sub_dir)
-        
+            file_type = is_animated and 'gif' or 'png'
+
+            file_name = DirectoryHelper.sanitize_dir_name(file.get('name', 'No Name')) + "." + file_type
+            _sub_dir = os.path.join("Resource", file_type)
+            download_path = self.create_directory(_sub_dir)
         # Emojis or Stickers
         else:
-            file_name = DirectoryHelper.sanitize_dir_name(file.name) + ('.gif' if file.animated else '.png')
-            sub_dir = os.path.join(
-                (file.__class__.__name__ if not isinstance(file, list) else 'Resources'),
-                ('gifs' if file.animated else 'images')
-            )
-            download_path = self.create_directory(sub_dir)
+            url = file.url
+            is_animated = file.animated
+            file_type = file.file_type
+
+            file_name = DirectoryHelper.sanitize_dir_name(file.name) + "." + file_type
+            _sub_dir = os.path.join(file.__class__.__name__, file_type)
+            download_path = self.create_directory(_sub_dir)
 
         file_path = os.path.join(download_path, file_name)
 
@@ -155,16 +159,33 @@ class Downloader(DirectoryHelper):
             return
 
         try:
-            file_size = await self._download_file(
-                session,
-                file.get('url') if isinstance(file, dict) else file.url,
-                file_path
-            )
+            file_size = await self._download_file(session, url, file_path)
+            if is_animated and file_type == "png": # APNG
+                if await self._convert_to_gif(file_path):
+                    print(f"\"{file_name}\" converted to gif!")
             print(f'"{file_name}" downloaded ({file_size:.2f} KB)!')
         except Exception as e:
             print(f"Failed to download {file_name}: {e}")
         finally:
             bar()
+
+    @staticmethod
+    def _run_prog(*cmd: str, to_terminal: bool = False, requited_rc: int = 0) -> bool:
+        return sp.run(
+                cmd,
+                stdout=sp.DEVNULL if not to_terminal else sp.PIPE,
+                stderr=sp.DEVNULL if not to_terminal else sp.PIPE,
+                stdin=sp.DEVNULL,
+                text=False
+            ).returncode == requited_rc
+
+    async def _convert_to_gif(self, src: str) -> bool:
+        dst = f"{os.path.splitext(src)[0]}.gif"
+        if self._run_prog("ffmpeg", "-hide_banner", "-i", src, dst):
+            os.rename(src, dst)
+            return True
+
+        return False
 
     async def download(self, files: Union[Emojis, Stickers, list[dict]]):
         """
