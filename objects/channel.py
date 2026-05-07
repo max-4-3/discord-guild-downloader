@@ -5,32 +5,32 @@ from objects.constants import DISCORD_BASE
 
 class Channel:
     __slots__ = (
-        'name',
-        'id',
-        'guild_id',
-        'topic',
-        'nsfw',
-        'position',
-        'slowmode_delay',
-        'overwrites',
-        'type',
-        'jump_url'
+        "name",
+        "id",
+        "guild_id",
+        "topic",
+        "nsfw",
+        "position",
+        "slowmode_delay",
+        "overwrites",
+        "type",
+        "jump_url",
     )
 
     def __init__(self, data: dict):
         self._from_data(data)
 
     def _from_data(self, data: dict):
-        self.name: str = data['name']
-        self.id = data['id']
-        self.guild_id = data['guild_id']
-        self.overwrites = data.get('permission_overwrites')
-        self.topic: Optional[str] = data.get('topic')
-        self.position: int = data['position']
-        self.nsfw: bool = data.get('nsfw', False)
-        self.slowmode_delay: float = data.get('rate_limit_per_user', 0)
-        self.type = data.get('type', 0)
-        self.jump_url = f'{DISCORD_BASE}/channels/{self.guild_id}/{self.id}'
+        self.name: str = data["name"]
+        self.id = data["id"]
+        self.guild_id = data["guild_id"]
+        self.overwrites = data.get("permission_overwrites")
+        self.topic: Optional[str] = data.get("topic")
+        self.position: int = data["position"]
+        self.nsfw: bool = data.get("nsfw", False)
+        self.slowmode_delay: float = data.get("rate_limit_per_user", 0)
+        self.type = data.get("type", 0)
+        self.jump_url = f"{DISCORD_BASE}/channels/{self.guild_id}/{self.id}"
 
     def __eq__(self, other):
         return isinstance(other, Channel) and self.id == other.id
@@ -40,7 +40,7 @@ class Channel:
 
     def __iter__(self):
         for attr in self.__slots__:
-            if attr[0] == '_':
+            if attr[0] == "_":
                 continue
             try:
                 value = getattr(self, attr, None)
@@ -75,4 +75,4 @@ class Channels:
         return Channel(self.__data[index])
 
     def __repr__(self):
-        return f'Total {self.__len__()} {self.__class__.__name__}!'
+        return f"Total {self.__len__()} {self.__class__.__name__}!"

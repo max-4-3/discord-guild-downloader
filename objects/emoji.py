@@ -11,12 +11,12 @@ class Emoji:
         self.id: int = int(data.get("id") or "0")
         self.name: str = data.get("name", "no name lol")
         self.animated: bool = data.get("animated", False)
-        self.file_type = 'gif' if self.animated else 'png'
-        self.url = f'{ASSET_BASE}/emojis/{self.id}.{self.file_type}?size=2048'
+        self.file_type = "gif" if self.animated else "png"
+        self.url = f"{ASSET_BASE}/emojis/{self.id}.{self.file_type}?size=2048"
 
     def __iter__(self):
         for attr in self.__slots__:
-            if attr[0] == '-':
+            if attr[0] == "-":
                 continue
             value = getattr(self, attr, None)
             if value is None:
@@ -25,8 +25,8 @@ class Emoji:
 
     def __str__(self) -> str:
         if self.animated:
-            return f'<a:{self.name}:{self.id}>'
-        return f'<:{self.name}:{self.id}>'
+            return f"<a:{self.name}:{self.id}>"
+        return f"<:{self.name}:{self.id}>"
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Emoji) and self.id == other.id
@@ -38,7 +38,7 @@ class Emoji:
         return self.id >> 22
 
     def __repr__(self) -> str:
-        return f'<Emoji id={self.id} name={self.name!r} animated={self.animated}>'
+        return f"<Emoji id={self.id} name={self.name!r} animated={self.animated}>"
 
 
 class Emojis:
@@ -56,5 +56,4 @@ class Emojis:
         return Emoji(self.__data[index])
 
     def __repr__(self):
-        return f'Total {self.__len__()} {self.__class__.__name__}!'
-
+        return f"Total {self.__len__()} {self.__class__.__name__}!"

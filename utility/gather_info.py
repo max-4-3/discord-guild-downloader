@@ -9,14 +9,14 @@ def is_valid_token(string: str):
 
 def get_token():
     config = read_config()
-    if config and config.get('token'):
+    if config and config.get("token"):
         while True:
             token_choice = input(f"[?] Load token from file? (y/n): \n").lower().strip()
             if token_choice not in ["yes", "no", "y", "n"]:
                 cls()
                 continue
             elif token_choice in ["yes", "y"]:
-                return config.get('token')
+                return config.get("token")
             elif token_choice in ["no", "n"]:
                 break
 
@@ -28,7 +28,9 @@ def get_token():
             print("invalid token given!")
             continue
         elif token in ["h", "help"]:
-            print('https://github.com/max-4-3/discord-guild-downloader/blob/main/how%20to%20get%20token.md')
+            print(
+                "https://github.com/max-4-3/discord-guild-downloader/blob/main/how%20to%20get%20token.md"
+            )
             continue
 
         store_config(token=token)
@@ -43,7 +45,7 @@ def list_guilds(headers):
 
     def print_guilds():
         for idx, guild in enumerate(guild_list, start=1):
-            print(f'{idx}. {guild.name}')
+            print(f"{idx}. {guild.name}")
 
     while True:
         print_guilds()

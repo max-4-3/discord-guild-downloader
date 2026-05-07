@@ -1,0 +1,38 @@
+Basic Info:
+    Name: %(name)s
+    id: %(id)s
+    description: %(description)s
+    icon: %(icon)s
+    splash: %(splash)s
+    discovery splash: %(discovery_splash)s
+    banner: %(banner)s
+
+Owner Info:
+    Name: %(o_name)s
+    id: %(o_id)s
+    pronoun: %(o_pro)s
+    avatar: %(o_avatar)s
+    banner: %(o_banner)s
+    bio: %(o_bio)s
+
+Presence Info:
+    %(name)s has %(approx_member)s members (approx).
+    %(name)s has %(approx_presence)s members online (approx).
+
+Media Info:
+    %(name)s has %(emojis)s emojis.
+    %(name)s has %(stickers)s stickers.
+
+Advance Info:
+    %(name)s has %(roles)s roles.
+    %(name)s has %(channels)s channels.
+    %(nsfw_level)s is the NSFW level of %(name)s.
+    %(mfa_level)s
+    %(premium_level)s
+    %(verification_level)s
+
+Features:
+%(features)s
+
+*This info is gathered at:
+%(now)s

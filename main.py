@@ -12,17 +12,24 @@ def check_for_update():
 
 
 def argument():
-    parser = argparse.ArgumentParser(description="Check for updates to the application.")
-    
+    parser = argparse.ArgumentParser(
+        description="Check for updates to the application."
+    )
+
     # The flag --update, if present, sets the value to True, otherwise False.
-    parser.add_argument('--update', action='store_true', help="Whether to update or not!", required=False)
+    parser.add_argument(
+        "--update",
+        action="store_true",
+        help="Whether to update or not!",
+        required=False,
+    )
 
     args = parser.parse_args()
 
     return args
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if not argument().update:
         check_for_update()
     else:

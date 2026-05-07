@@ -3,48 +3,56 @@ from objects.constants import ASSET_BASE
 
 class Role:
     __slots__ = (
-        'id',
-        'name',
-        'permissions',
-        'colour',
-        'position',
-        'managed',
-        'mentionable',
-        'hoist',
-        'guild',
-        'emoji',
-        'icon',
+        "id",
+        "name",
+        "permissions",
+        "colour",
+        "position",
+        "managed",
+        "mentionable",
+        "hoist",
+        "guild",
+        "emoji",
+        "icon",
     )
 
     def __init__(self, data: dict):
-        self.id = data['id']
+        self.id = data["id"]
 
         self._from_data(data)
 
     def _from_data(self, data: dict):
-        self.name: str = data['name']
-        self.permissions: int = int(data.get('permissions', 0))
-        self.position: int = data.get('position', 0)
-        self.colour: int = data.get('color', 0)
-        self.hoist: bool = data.get('hoist', False)
-        self.managed: bool = data.get('managed', False)
-        self.mentionable: bool = data.get('mentionable', False)
-        icon_hash = data.get('icon')
+        self.name: str = data["name"]
+        self.permissions: int = int(data.get("permissions", 0))
+        self.position: int = data.get("position", 0)
+        self.colour: int = data.get("color", 0)
+        self.hoist: bool = data.get("hoist", False)
+        self.managed: bool = data.get("managed", False)
+        self.mentionable: bool = data.get("mentionable", False)
+        icon_hash = data.get("icon")
         if not icon_hash:
             self.icon = None
         else:
-            self.icon = ASSET_BASE + '/role-icons/' + str(self.id) + '/' + icon_hash + '.png' + '?size=2048'
-        self.emoji = data.get('unicode_emoji')
+            self.icon = (
+                ASSET_BASE
+                + "/role-icons/"
+                + str(self.id)
+                + "/"
+                + icon_hash
+                + ".png"
+                + "?size=2048"
+            )
+        self.emoji = data.get("unicode_emoji")
 
     def __str__(self) -> str:
         return self.name
 
     def __repr__(self) -> str:
-        return f'<Role id={self.id} name={self.name!r}>'
+        return f"<Role id={self.id} name={self.name!r}>"
 
     def __iter__(self):
         for attr in self.__slots__:
-            if attr[0] == '-':
+            if attr[0] == "-":
                 continue
             value = getattr(self, attr, None)
             if value is None:
@@ -67,5 +75,4 @@ class Roles:
         return Role(self.__data[index])
 
     def __repr__(self):
-        return f'Total {self.__len__()} {self.__class__.__name__}!'
-
+        return f"Total {self.__len__()} {self.__class__.__name__}!"

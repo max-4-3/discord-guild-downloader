@@ -8,7 +8,7 @@ def read_config() -> dict:
     try:
         # Ensure the file exists before reading
         if os.path.exists(CONFIG_PATH):
-            with open(CONFIG_PATH, 'r', encoding='utf-8', errors='ignore') as file:
+            with open(CONFIG_PATH, "r", encoding="utf-8", errors="ignore") as file:
                 return json.load(file)
         else:
             return {}
@@ -25,17 +25,25 @@ def store_config(**kwargs):
     data = {}
 
     # Store or update the token if it's different from the existing one
-    if kwargs.get('token') and kwargs.get('token') != already_config.get('token'):
-        data['token'] = kwargs.get('token')
+    if kwargs.get("token") and kwargs.get("token") != already_config.get("token"):
+        data["token"] = kwargs.get("token")
     else:
-        data['token'] = already_config.get('token')
+        data["token"] = already_config.get("token")
 
     # Store or update the path if it's different from the existing one
-    if kwargs.get('path') and kwargs.get('path') != already_config.get('path'):
-        data['path'] = kwargs.get('path')
+    if kwargs.get("path") and kwargs.get("path") != already_config.get("path"):
+        data["path"] = kwargs.get("path")
     else:
-        data['path'] = already_config.get('path')
+        data["path"] = already_config.get("path")
+
+    # Store or update the guild_rapr path if it's different from the existing one
+    if kwargs.get("guild_rapr") and kwargs.get("guild_rapr") != already_config.get(
+        "guild_rapr"
+    ):
+        data["guild_rapr"] = kwargs.get("guild_rapr")
+    else:
+        data["guild_rapr"] = already_config.get("guild_rapr")
 
     # Write the updated config to the file
-    with open(CONFIG_PATH, 'w', encoding='utf-8', errors='ignore') as file:
+    with open(CONFIG_PATH, "w", encoding="utf-8", errors="ignore") as file:
         json.dump(data, file, indent=2, ensure_ascii=False)

@@ -1,11 +1,11 @@
 import os
+import subprocess as sp
 from asyncio import create_task, gather
 from asyncio import run
 from json import dump
 from random import uniform
 from time import sleep
 from typing import List, Union
-import subprocess as sp
 
 import aiohttp
 from alive_progress import alive_bar
@@ -13,7 +13,9 @@ from alive_progress import alive_bar
 from objects.emoji import Emoji, Emojis
 from objects.guild import Guild
 from objects.sticker import Sticker, Stickers
-from utility import is_android
+from utility.parser import make_values, parse_text
+from utility import GUILD_RAPR, is_android
+from utility.store import read_config, store_config
 
 
 class DirectoryHelper:
@@ -34,14 +36,14 @@ class DirectoryHelper:
         """
         Replace any reserved characters in the directory name for Windows systems.
         """
-        reserved_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
+        reserved_chars = ["<", ">", ":", '"', "/", "\\", "|", "?", "*"]
         for char in reserved_chars:
-            filename = filename.replace(char, '_')
+            filename = filename.replace(char, "_")
 
         filename = filename.strip()
 
         if not filename:
-            filename = 'File Name is Empty lol'
+            filename = "File Name is Empty lol"
 
         return filename
 
@@ -52,22 +54,31 @@ class DirectoryHelper:
         path = os.path.join(self.dir_name, sub_dir)
         os.makedirs(path, exist_ok=True)
         return path
-    
+
     def update_media(self):
         """
         Updates the Download directory so that android apps can recognize the file changes.
         """
         if not is_android:
             return
-        
+
         command = f"am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://{os.path.split(self.dir_name)[0]}"
-        sp.run(command, stdin=sp.DEVNULL, stdout=sp.DEVNULL, stderr=sp.DEVNULL, text=False, capture_output=False, shell=True)
+        sp.run(
+            command,
+            stdin=sp.DEVNULL,
+            stdout=sp.DEVNULL,
+            stderr=sp.DEVNULL,
+            text=False,
+            capture_output=False,
+            shell=True,
+        )
 
 
 class Downloader(DirectoryHelper):
     """
     The main class that handles downloading files such as Emojis, Stickers, and more.
     """
+
     READ_SIZE: int = 1024 * 1024 * 4
 
     def __init__(self, guild: Guild, download_path: str, choice: int):
@@ -87,24 +98,26 @@ class Downloader(DirectoryHelper):
             3: self.save_channel_info,
             4: self.save_roles_info,
             5: self.save_guild_info,
-            6: self.run_all_tasks
+            6: self.run_all_tasks,
         }
 
         if self.choice > len(download_dict):
-            raise KeyError('Choice is not Implemented!')
+            raise KeyError("Choice is not Implemented!")
 
         download_dict[self.choice]()
         self.update_media()
 
     @staticmethod
-    async def _download_file(session: aiohttp.ClientSession, url: str, file_path: str) -> float:
+    async def _download_file(
+        session: aiohttp.ClientSession, url: str, file_path: str
+    ) -> float:
         """
         Downloads a file and returns its size in KB.
         """
         async with session.get(url) as response:
             content: int = 0
-            with open(file_path, 'wb') as f:
-                while (resp := await response.content.read(Downloader.READ_SIZE)):
+            with open(file_path, "wb") as f:
+                while resp := await response.content.read(Downloader.READ_SIZE):
                     f.write(resp)
                     content += len(resp)
 
@@ -122,11 +135,11 @@ class Downloader(DirectoryHelper):
                 if not os.path.isfile(file_path):
                     continue
                 total_files += 1
-        
+
         return {
             "gifs": total_gifs,
             "images": total_files - total_gifs,
-            "total files": total_files
+            "total files": total_files,
         }
 
     async def _download(self, session, file: Union[Emoji, Sticker, dict], bar):
@@ -136,10 +149,14 @@ class Downloader(DirectoryHelper):
         # Handle case for dict file type
         if isinstance(file, dict):
             url = str(file.get("url"))
-            is_animated = file.get('animated', False)
-            file_type = is_animated and 'gif' or 'png'
+            is_animated = file.get("animated", False)
+            file_type = is_animated and "gif" or "png"
 
-            file_name = DirectoryHelper.sanitize_dir_name(file.get('name', 'No Name')) + "." + file_type
+            file_name = (
+                DirectoryHelper.sanitize_dir_name(file.get("name", "No Name"))
+                + "."
+                + file_type
+            )
             _sub_dir = os.path.join("Resource", file_type)
             download_path = self.create_directory(_sub_dir)
         # Emojis or Stickers
@@ -160,9 +177,9 @@ class Downloader(DirectoryHelper):
 
         try:
             file_size = await self._download_file(session, url, file_path)
-            if is_animated and file_type == "png": # APNG
+            if is_animated and file_type == "png":  # APNG
                 if await self._convert_to_gif(file_path):
-                    print(f"\"{file_name}\" converted to gif!")
+                    print(f'"{file_name}" converted to gif!')
             print(f'"{file_name}" downloaded ({file_size:.2f} KB)!')
         except Exception as e:
             print(f"Failed to download {file_name}: {e}")
@@ -171,13 +188,16 @@ class Downloader(DirectoryHelper):
 
     @staticmethod
     def _run_prog(*cmd: str, to_terminal: bool = False, requited_rc: int = 0) -> bool:
-        return sp.run(
+        return (
+            sp.run(
                 cmd,
                 stdout=sp.DEVNULL if not to_terminal else sp.PIPE,
                 stderr=sp.DEVNULL if not to_terminal else sp.PIPE,
                 stdin=sp.DEVNULL,
-                text=False
-            ).returncode == requited_rc
+                text=False,
+            ).returncode
+            == requited_rc
+        )
 
     async def _convert_to_gif(self, src: str) -> bool:
         dst = f"{os.path.splitext(src)[0]}.gif"
@@ -191,10 +211,16 @@ class Downloader(DirectoryHelper):
         """
         Downloads a list of files (Emojis or Stickers).
         """
-        download_type = files.__class__.__name__.title() if not isinstance(files, list) else "Resources"
+        download_type = (
+            files.__class__.__name__.title()
+            if not isinstance(files, list)
+            else "Resources"
+        )
 
         async with aiohttp.ClientSession() as session:
-            with alive_bar(len(files), title=f'Downloading {download_type}...', spinner='dots') as bar:
+            with alive_bar(
+                len(files), title=f"Downloading {download_type}...", spinner="dots"
+            ) as bar:
                 # Creates async task!
                 tasks = []
                 for file in files:
@@ -216,7 +242,7 @@ class Downloader(DirectoryHelper):
         Saves a list of dictionaries to a JSON file.
         """
         path = os.path.join(self.path, file_name)
-        with open(path, 'w', encoding='utf-8', errors='ignore') as f:
+        with open(path, "w", encoding="utf-8", errors="ignore") as f:
             dump(data, f, ensure_ascii=False, indent=2)
             print(f"Saved {file_name}")
 
@@ -245,23 +271,48 @@ class Downloader(DirectoryHelper):
         Save all channel information to a JSON file.
         """
         channel_data = [dict(channel) for channel in self.guild.channels]
-        self.save_json(channel_data, f'{self.guild.name}_channel_info.json')
+        self.save_json(channel_data, f"{self.guild.name}_channel_info.json")
 
     def save_roles_info(self):
         """
         Save all roles information to a JSON file.
         """
         role_data = [dict(role) for role in self.guild.roles]
-        self.save_json(role_data, f'{self.guild.name}_roles_info.json')
+        self.save_json(role_data, f"{self.guild.name}_roles_info.json")
 
     def save_guild_info(self):
         """
         Save basic guild information to a text file.
         """
-        file_name = f'{self.guild.name}_info.txt'
-        with open(os.path.join(self.path, file_name), 'w', encoding='utf-8', errors='ignore') as f:
-            f.write(str(self.guild))
+        file_name = f"{self.guild.name}_info.txt"
+        with open(
+            os.path.join(self.path, file_name), "w", encoding="utf-8", errors="ignore"
+        ) as f:
+            f.write(self.stringify_guild())
             print(f"Guild info saved to {file_name}")
+
+    def stringify_guild(self) -> str:
+        config = read_config()
+        if "guild_rapr" not in config:
+            if os.path.exists(GUILD_RAPR):
+                store_config(guild_rapr=GUILD_RAPR)
+                return self.stringify_guild()
+            else:
+                return f"Rapr path not exists at {GUILD_RAPR}"
+
+        guild_rapr = config["guild_rapr"]
+        if not os.path.exists(guild_rapr):
+            return f"Rapr path not exists at {guild_rapr}"
+
+        with open(guild_rapr, "r") as file:
+            template = file.read()
+
+        values = make_values(self.guild)
+        for start, end, fmt in reversed(list(parse_text(template))):
+            repl = values.get(fmt, f"<missing:{fmt}>")
+            template = template[:start] + repl + template[end:]
+
+        return template
 
     def run_all_tasks(self):
         """
@@ -272,7 +323,7 @@ class Downloader(DirectoryHelper):
             self.download_stickers,
             self.save_channel_info,
             self.save_roles_info,
-            self.save_guild_info
+            self.save_guild_info,
         ]
 
         for task in tasks:
@@ -286,7 +337,9 @@ class Downloader(DirectoryHelper):
         print(f"Files saved at {self.path}")
 
     def report(self):
-        return (f"Files saved at {self.path}"
-                f"\nTotal Files downloaded: {self.total_files}"
-                f"\nTotal Images Downloaded: {self.total_files - self.total_gifs}"
-                f"\nTotal Gifs Downloaded: {self.total_gifs}")
+        return (
+            f"Files saved at {self.path}"
+            f"\nTotal Files downloaded: {self.total_files}"
+            f"\nTotal Images Downloaded: {self.total_files - self.total_gifs}"
+            f"\nTotal Gifs Downloaded: {self.total_gifs}"
+        )

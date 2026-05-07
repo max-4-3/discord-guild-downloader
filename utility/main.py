@@ -4,6 +4,7 @@ import time
 
 import objects.guild
 import objects.users
+from utility import GUILD_RAPR
 import utility.cls
 import utility.gather_info
 import utility.generate_headers
@@ -13,11 +14,21 @@ from utility.arts import *
 
 
 class Main:
-
-    __slots__ = ('guild', 'owner', 'client', 'downloadPath', 'guild_id', '__loop__', '__token__', '__headers__')
+    __slots__ = (
+        "guild",
+        "owner",
+        "client",
+        "downloadPath",
+        "guildRarpPath",
+        "guild_id",
+        "__loop__",
+        "__token__",
+        "__headers__",
+    )
 
     def __init__(self):
         self.__loop__, self.__token__, self.guild_id = None, None, None
+        self.guildRarpPath = GUILD_RAPR
         self._set_important()
 
     def _set_important(self):
@@ -38,12 +49,15 @@ class Main:
         # Sets guild and owner
         if not self.guild_id:
             self.guild_id = utility.gather_info.get_guild_id(self.__headers__)
-            self.guild = objects.guild.Guild(self.guild_id, self.__loop__, self.__headers__)
+            self.guild = objects.guild.Guild(
+                self.guild_id, self.__loop__, self.__headers__
+            )
             self.owner = self.guild.owner
         utility.cls.cls(art=main_art)
 
         # Sets the download path
         self._set_or_get_download_path()
+        self._set_or_get_guild_rapr_path()
 
     def _destroy(self, guild: bool = True, token: bool = False):
         if guild:
@@ -52,17 +66,35 @@ class Main:
             self.__token__ = None
         self._set_important()
 
+    def _set_or_get_guild_rapr_path(self, **kwargs):
+        config = utility.store.read_config()
+
+        # Check if a new path is provided via kwargs
+        if kwargs.get("guild_rapr"):
+            self.guildRarpPath = kwargs.get("rapr_path")
+            utility.store.store_config(guild_rapr=self.guildRarpPath)
+
+        # If no new path is provided, use the path from the config
+        elif config.get("guild_rapr"):
+            self.guildRarpPath = config.get("guild_rapr")
+
+        # If no path is stored in the config, use the default path
+        else:
+            if os.path.exists(GUILD_RAPR):
+                self.guildRarpPath = GUILD_RAPR
+                utility.store.store_config(guild_rapr=self.guildRarpPath)
+
     def _set_or_get_download_path(self, **kwargs):
         config = utility.store.read_config()
 
         # Check if a new path is provided via kwargs
-        if kwargs.get('path'):
-            self.downloadPath = kwargs.get('path')
+        if kwargs.get("path"):
+            self.downloadPath = kwargs.get("path")
             utility.store.store_config(path=self.downloadPath)
 
         # If no new path is provided, use the path from the config
-        elif config.get('path'):
-            self.downloadPath = config.get('path')
+        elif config.get("path"):
+            self.downloadPath = config.get("path")
 
         # If no path is stored in the config, use the current working directory
         else:
@@ -80,27 +112,29 @@ class Main:
 
         utility.cls.cls(art=main_art)
 
-        info = (f'Your Info:'
-                f'\n\tName: {self.client.display_name}'
-                f'\n\tContact: {self.client.contact}\n'
-                f'Guild Info:'
-                f'\n\tName: {self.guild.name}'
-                f'\n\tID: {self.guild.id}\n'
-                f'Owner Info:'
-                f'\n\tName: {self.owner.display_name}'
-                f'\n\tID: {self.owner.id}'
-                f'\n\tbio: {self.owner.bio}\n').expandtabs(2)
-        print('is this info correct? [y/n]')
+        info = (
+            f"Your Info:"
+            f"\n\tName: {self.client.display_name}"
+            f"\n\tContact: {self.client.contact}\n"
+            f"Guild Info:"
+            f"\n\tName: {self.guild.name}"
+            f"\n\tID: {self.guild.id}\n"
+            f"Owner Info:"
+            f"\n\tName: {self.owner.display_name}"
+            f"\n\tID: {self.owner.id}"
+            f"\n\tbio: {self.owner.bio}\n"
+        ).expandtabs(2)
+        print("is this info correct? [y/n]")
         print(info)
         while True:
-            choice = input(':')
+            choice = input(":")
             if not choice:
-                print('Choose b/w yes and no')
-            elif choice.lower() not in ['yes', 'no', 'n', 'y']:
-                print('Invalid Choice')
-            elif choice.lower() in ['no', 'n']:
+                print("Choose b/w yes and no")
+            elif choice.lower() not in ["yes", "no", "n", "y"]:
+                print("Invalid Choice")
+            elif choice.lower() in ["no", "n"]:
                 self._destroy()
-            elif choice.lower() in ['exit']:
+            elif choice.lower() in ["exit"]:
                 exit(0)
             else:
                 return True
@@ -114,16 +148,17 @@ class Main:
             4: "Save roles info",
             5: "Save guild info",
             6: "All of the above!",
-            7: f"Change Download Dir\n[{self.downloadPath}]"
+            7: f"Change Download Dir\n[{self.downloadPath}]",
+            8: f"Change Guild rapr file\n[{self.guildRarpPath}]",
         }
         for idx, name in menu.items():
             print(f"{idx}.", name)
-        print('Choose:\n')
+        print("Choose:\n")
         while True:
-            choice = input('-> ').strip().lower()
+            choice = input("-> ").strip().lower()
             if not choice:
                 self.showOptions()
-            elif choice in ['q', 'exit', 'stop']:
+            elif choice in ["q", "exit", "stop"]:
                 return
             elif not choice.isdigit():
                 self.showOptions()
@@ -133,22 +168,35 @@ class Main:
                 # downloadPath will be created by Downloader
                 try:
                     from tkinter import filedialog
-                    newPath = filedialog.askdirectory(title='Download Directory')
+
+                    newPath = filedialog.askdirectory(title="Download Directory")
                     self._set_or_get_download_path(path=newPath)
                     self.showOptions()
                 except (ModuleNotFoundError, ImportError, ImportWarning):
-                    newPath = input('Enter a Path:\n')
+                    newPath = input("Enter a Path:\n")
                     self._set_or_get_download_path(path=newPath)
+                    self.showOptions()
+            elif int(choice) == 8:
+                try:
+                    from tkinter import filedialog
+
+                    newPath = filedialog.askopenfilename(title="Guild Rapr Text File")
+                    self._set_or_get_guild_rapr_path(guild_rapr=newPath)
+                    self.showOptions()
+                except (ModuleNotFoundError, ImportError, ImportWarning):
+                    newPath = input("Enter a Path:\n")
+                    self._set_or_get_guild_rapr_path(guild_rapr=newPath)
                     self.showOptions()
             else:
                 start_time = time.perf_counter()
                 task = Downloader(self.guild, self.downloadPath, int(choice))
                 end_time = time.perf_counter()
 
-                print(f"Took {end_time - start_time:.2f}s to complete!"
-                      f"\nReport: {task.report()}")
+                print(
+                    f"Took {end_time - start_time:.2f}s to complete!"
+                    f"\nReport: {task.report()}"
+                )
                 break
 
     def retry(self):
-    	self._destroy(guild=True)
-        
+        self._destroy(guild=True)
