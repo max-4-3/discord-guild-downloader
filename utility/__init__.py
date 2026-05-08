@@ -7,8 +7,13 @@ is_android = not is_windows and (
 )
 
 ROOT = os.path.split(os.path.split(__file__)[0])[0]
+CONFIG_ROOT = (
+    os.getenv("LOCALAPPDATA")
+    if is_windows
+    else os.path.join(os.getenv("HOME") or ROOT, ".config")
+) or ROOT
 CONFIG_PATH = os.path.join(
-    os.getenv("HOME" if not is_windows else "LOCALAPPDATA", ROOT),
+    CONFIG_ROOT,
     "discord-guild-downloader",
     "config_file.json",
 )
